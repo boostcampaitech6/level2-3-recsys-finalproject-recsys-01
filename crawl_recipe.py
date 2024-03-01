@@ -1,4 +1,4 @@
-import re
+import re, os
 
 import pandas as pd
 from tqdm import tqdm
@@ -7,6 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from bs4 import BeautifulSoup
 
@@ -19,30 +20,29 @@ def get_userid_set():
     recipe_df_22 = pd.read_csv(RECIPE_FILE1, engine='python', encoding='cp949', encoding_errors='ignore') # EUC-KR, utf-8, cp949, ms949, iso2022_jp_2, iso2022_kr johab
     recipe_df_23 = pd.read_csv(RECIPE_FILE2, engine='python', encoding='cp949', encoding_errors='ignore')
 
-    # union users
-    userset_22 = set(recipe_df_22['RGTR_ID'].values)
-    userset_23 = set(recipe_df_23['RGTR_ID'].values)
-    userset_all = userset_22 | userset_23
+    # union recipes
+    recipeset_22 = set(recipe_df_22['RGTR_ID'].values)
+    recipeset_23 = set(recipe_df_23['RGTR_ID'].values)
+    recipeset_all = recipeset_22 | recipeset_23
 
-    print(len(userset_22), len(userset_23), len(userset_all))
-    return userset_all
+    print(len(recipeset_22), len(recipeset_23), len(recipeset_all))
+    return recipeset_all
 
-def get_html_source(driver, uid:str=16221801):
-
-    url = f'https://m.10000recipe.com/profile/review.html?uid={uid}'
+def get_html_source(driver, uid:str='pingky7080', page_no=1):
+    url = f'https://m.10000recipe.com/profile/recipe.html?uid={uid}&page={page_no}'
     driver.get(url) # url 접속
-    driver.implicitly_wait(2)
+    driver.implicitly_wait(3)
 
-    # 후기 수// 10 만큼 더보기 버튼 누르기
-    num_review = int(driver.find_element(By.CLASS_NAME, 'myhome_cont').find_element(By.CLASS_NAME, 'active').find_element(By.CLASS_NAME, 'num').text)
-
-    for i in range(num_review//10):
-        btn_href = driver.find_elements(By.CLASS_NAME, 'view_btn_more')[-1].find_element(By.TAG_NAME, 'a')
-        driver.execute_script("arguments[0].click();", btn_href) #자바 명령어 실행
-        driver.implicitly_wait(2)
-
-    # 페이지의 HTML 소스 가져오기
     return driver.page_source
+
+def parse_user_recipes(soup):
+    user_recipes = list()
+    for recipe in soup.find('div', 'recipe_list').find_all('div', 'media'):
+        recipe_id = parse_recipe_id(recipe)
+        if len(recipe_id) <= 0: continue 
+        user_recipes.append(recipe_id)
+
+    return user_recipes
 
 def parse_recipe_id(review):
     recipe_id = ''
@@ -59,48 +59,48 @@ def save_results(data_list):
 
     # build df
     df = pd.DataFrame(data_list)
-    # save
-    df.to_csv('results.csv')
+
+    PATH = 'results.csv'
+    if os.path.exists(PATH):
+        # save
+        df.to_csv('results.csv', mode='a', index=False, header=False)
+    else:
+        df.to_csv('results.csv', index=False)
 
 
 def main():
     # get all user ids
-    userid_set = get_userid_set()
+    recipeid_set = get_userid_set()
 
     # get automative driver
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     
-    # datalist 
-    data_list = [] 
-
     # collect data by user id
-    for i,uid in enumerate(tqdm(userid_set)):
-
+    for i,uid in enumerate(tqdm(recipeid_set)):
         try:
-            html_source = get_html_source(driver, uid) # temporarily fixed
+            html_source = get_html_source(driver, uid)
             soup = BeautifulSoup(html_source, 'html.parser')
-
-            nickname = soup.find('p', 'pic_r_name').text.split('\n')[0].strip()
-
-            # parse review by recipes
-            user_history = dict()
-            for review in soup.find('ul', id='listDiv').find_all('div', 'media'):
-                recipe_id = parse_recipe_id(review)
-                if len(recipe_id) <= 0: continue 
-                rating = len(review.find('span', 'view2_review_star').find_all('img'))
-                user_history[recipe_id] = rating
+            num_recipe = int(soup.find('div', 'myhome_cont').find('li', 'active').find('p', 'num').text)
             
-            if len(user_history) > 0:
-                data_list.append({
-                    'uid': uid,
-                    'user_name': nickname,
-                    'history': user_history,
-                })
-        except:
-            continue
+            next_page_num: int = num_recipe // 20
+            user_recipes = list()
+            user_recipes.extend(parse_user_recipes(soup))
 
-    # save results
-    save_results(data_list)
+            for page_no in range(2, next_page_num+2):
+                # parsing
+                next_page_source = get_html_source(driver, uid, page_no)
+                soup = BeautifulSoup(next_page_source, 'html.parser')
+
+                # parse review by recipes
+                user_recipes.extend(parse_user_recipes(soup))
+    
+            if len(user_recipes) > 0:
+                save_results([{
+                    'uid': uid,
+                    'recipes': user_recipes,
+                }])
+        except UnexpectedAlertPresentException:
+            continue
 
 if __name__ == '__main__':
     main()
