@@ -6,6 +6,7 @@ from tqdm import tqdm
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
 
 from bs4 import BeautifulSoup
 
@@ -31,6 +32,14 @@ def get_html_source(driver, uid:str=16221801):
     url = f'https://m.10000recipe.com/profile/review.html?uid={uid}'
     driver.get(url) # url 접속
     driver.implicitly_wait(2)
+
+    # 후기 수// 10 만큼 더보기 버튼 누르기
+    num_review = int(driver.find_element(By.CLASS_NAME, 'myhome_cont').find_element(By.CLASS_NAME, 'active').find_element(By.CLASS_NAME, 'num').text)
+
+    for i in range(num_review//10):
+        btn_href = driver.find_elements(By.CLASS_NAME, 'view_btn_more')[-1].find_element(By.TAG_NAME, 'a')
+        driver.execute_script("arguments[0].click();", btn_href) #자바 명령어 실행
+        driver.implicitly_wait(2)
 
     # 페이지의 HTML 소스 가져오기
     return driver.page_source
@@ -72,7 +81,6 @@ def main():
             soup = BeautifulSoup(html_source, 'html.parser')
 
             nickname = soup.find('p', 'pic_r_name').text.split('\n')[0].strip()
-            #print(nickname)
 
             # parse review by recipes
             user_history = dict()
@@ -90,8 +98,6 @@ def main():
                 })
         except:
             continue
-#        finally:
-#            if len(data_list) > 10: break
 
     # save results
     save_results(data_list)
