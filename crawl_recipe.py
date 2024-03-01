@@ -1,4 +1,5 @@
 import re, os
+from datetime import datetime as dt
 
 import pandas as pd
 from tqdm import tqdm
@@ -59,13 +60,14 @@ def save_results(data_list):
 
     # build df
     df = pd.DataFrame(data_list)
+    date = dt.now().strftime('%y%m%d')
 
-    PATH = 'results.csv'
+    PATH = f'recipes_{date}.csv'
     if os.path.exists(PATH):
         # save
-        df.to_csv('results.csv', mode='a', index=False, header=False)
+        df.to_csv(PATH, mode='a', index=False, header=False)
     else:
-        df.to_csv('results.csv', index=False)
+        df.to_csv(PATH, index=False)
 
 
 def main():

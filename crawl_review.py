@@ -1,4 +1,5 @@
 import re
+from datetime import datetime as dt
 
 import pandas as pd
 from tqdm import tqdm
@@ -59,8 +60,12 @@ def save_results(data_list):
 
     # build df
     df = pd.DataFrame(data_list)
+    date = dt.now().strftime('%y%m%d')
+
+    PATH = f'reviews_{date}.csv'
+    
     # save
-    df.to_csv('results.csv')
+    df.to_csv(PATH)
 
 
 def main():
