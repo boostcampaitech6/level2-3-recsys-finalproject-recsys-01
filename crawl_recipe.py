@@ -86,7 +86,11 @@ def main():
         try:
             html_source = get_html_source(driver, uid)
             soup = BeautifulSoup(html_source, 'html.parser')
-            num_recipe = int(soup.find('div', 'myhome_cont').find('li', 'active').find('p', 'num').text)
+            
+            # total recipe count for pagination
+            num_recipe = soup.find('div', 'myhome_cont').find('li', 'active').find('p', 'num').text
+            num_recipe = re.sub(r'\D', '', num_recipe) # 숫자 아닌 값 제거; decimal point(,) 제거
+            num_recipe = int(num_recipe)
             
             next_page_num: int = num_recipe // 20
             user_recipes = list()
