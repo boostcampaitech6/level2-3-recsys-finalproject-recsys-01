@@ -65,15 +65,19 @@ def save_results(data_list):
     PATH = f'reviews_{date}.csv'
     
     # save
-    df.to_csv(PATH)
+    df.to_csv(PATH, index=False)
 
 
 def main():
     # get all user ids
     userid_set = get_userid_set()
 
+    # set options for opening chrome browser in CLI env
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')  # headless 모드로 실행
+
     # get automative driver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     
     # datalist 
     data_list = [] 

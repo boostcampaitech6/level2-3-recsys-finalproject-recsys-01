@@ -74,8 +74,12 @@ def main():
     # get all user ids
     recipeid_set = get_userid_set()
 
+    # set options for opening chrome browser in CLI env
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')  # headless 모드로 실행
+
     # get automative driver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     
     # collect data by user id
     for i,uid in enumerate(tqdm(recipeid_set)):

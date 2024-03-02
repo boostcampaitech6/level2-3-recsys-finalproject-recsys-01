@@ -52,10 +52,15 @@ def save_results(data_list):
 def main():
     # get all recipe snos
     recipe_snos = get_recipesno_set()
+    
+    # set options for opening chrome browser in CLI env
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')  # headless 모드로 실행
+
     # get automative driver
     # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(driver_version='122.0.6261.94').install()))
-
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    
     # collect data by recipe snos
     for i, rsno in enumerate(tqdm(recipe_snos)):
         try:
