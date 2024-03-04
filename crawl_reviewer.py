@@ -1,6 +1,8 @@
 import os
 from datetime import datetime as dt
 from tqdm import tqdm
+
+import numpy as np
 import pandas as pd 
 
 from selenium import webdriver
@@ -9,6 +11,9 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
 from bs4 import BeautifulSoup
+
+def get_recipesno_from_npy(filename):
+    return np.load(filename)
 
 def get_recipesno_set():
     # filenames
@@ -51,10 +56,18 @@ def save_results(data_list):
 
 def main():
     # get all recipe snos
-    recipe_snos = get_recipesno_set()
+    # recipe_snos = get_recipesno_set()
+    recipe_snos = get_recipesno_from_npy('recipe_sno_0.npy')
     # get automative driver
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(driver_version='122.0.6261.94').install()))
+#    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+
+    # ubuntu driver
+    options = webdriver.ChromeOptions()
+    options.add_argument('--disable-gpu')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')  # sandbox를 사용하지 않는다는 옵션!! 필수
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    driver = webdriver.Chrome(options=options)
 
     # collect data by recipe snos
     for i, rsno in enumerate(tqdm(recipe_snos)):
