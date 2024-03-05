@@ -1,6 +1,7 @@
-import re
+import os, re
 from datetime import datetime as dt
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -8,8 +9,22 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from bs4 import BeautifulSoup
+
+def get_userid_from_recipe_reviews():
+
+    # filenames
+    crawled_files = [
+        'reviewers_240302.csv', 'reviewers_240303.csv', 
+        'reviewers_240304.csv', 'reviewers_240305.csv', 
+    ]
+
+    df = pd.concat([pd.read_csv(f) for f in crawled_files], axis=0)
+    unique_users = set(np.concatenate(df['reviewers'].apply(eval).values))
+    
+    return unique_users
 
 def get_userid_set():
     # filenames
@@ -63,25 +78,32 @@ def save_results(data_list):
     date = dt.now().strftime('%y%m%d')
 
     PATH = f'reviews_{date}.csv'
-    
-    # save
-    df.to_csv(PATH, index=False)
 
+    if os.path.exists(PATH):
+        # save
+        df.to_csv(PATH, mode='a', index=False, header=False)
+    else:
+        df.to_csv(PATH, index=False)
 
 def main():
     # get all user ids
-    userid_set = get_userid_set()
+    # userid_set = get_userid_set()
+    userid_set = get_userid_from_recipe_reviews()
 
     # set options for opening chrome browser in CLI env
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')  # headless 모드로 실행
 
     # get automative driver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(driver_version='122.0.6261.94').install()))
+    options = webdriver.ChromeOptions()
+    options.add_argument('--disable-gpu')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')  # sandbox를 사용하지 않는다는 옵션!! 필수
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    driver = webdriver.Chrome(options=options)
     
-    # datalist 
-    data_list = [] 
-
     # collect data by user id
     for i,uid in enumerate(tqdm(userid_set)):
 
@@ -97,15 +119,17 @@ def main():
                 recipe_id = parse_recipe_id(review)
                 if len(recipe_id) <= 0: continue 
                 rating = len(review.find('span', 'view2_review_star').find_all('img'))
-                user_history[recipe_id] = rating
+                datetime = review.find('span', {'style': "font-size:11px;color:#888;display: block; padding-top: 4px;"}).text
+                user_history[recipe_id] = {'rating': rating, 'datetime': datetime}
             
             if len(user_history) > 0:
-                data_list.append({
+                save_results([{
                     'uid': uid,
                     'user_name': nickname,
                     'history': user_history,
-                })
-        except:
+                }])
+
+        except UnexpectedAlertPresentException:
             continue
 
     # save results
