@@ -132,8 +132,5 @@ def main():
         except UnexpectedAlertPresentException:
             continue
 
-    # save results
-    save_results(data_list)
-
 if __name__ == '__main__':
     main()
