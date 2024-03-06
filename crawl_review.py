@@ -13,6 +13,9 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from bs4 import BeautifulSoup
 
+def get_userid_from_recipe_reviews_split():
+    return np.load('userid_from_recipe_reviews_1.npy')
+
 def get_userid_from_recipe_reviews():
 
     # filenames
@@ -77,7 +80,7 @@ def save_results(data_list):
     df = pd.DataFrame(data_list)
     date = dt.now().strftime('%y%m%d')
 
-    PATH = f'reviews_{date}.csv'
+    PATH = f'reviews_1_{date}.csv'
 
     if os.path.exists(PATH):
         # save
@@ -88,7 +91,8 @@ def save_results(data_list):
 def main():
     # get all user ids
     # userid_set = get_userid_set()
-    userid_set = get_userid_from_recipe_reviews()
+    # userid_set = get_userid_from_recipe_reviews()
+    userid_set = get_userid_from_recipe_reviews_split()
 
     # set options for opening chrome browser in CLI env
     chrome_options = webdriver.ChromeOptions()
