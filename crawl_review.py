@@ -13,8 +13,8 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from bs4 import BeautifulSoup
 
-def get_userid_from_recipe_reviews_split():
-    return np.load('userid_from_recipe_reviews_1.npy')
+def get_userid_from_recipe_reviews_split(fold):
+    return np.load(f'userid_from_recipe_reviews_{fold}.npy')
 
 def get_userid_from_recipe_reviews():
 
@@ -74,13 +74,13 @@ def parse_recipe_id(review):
             recipe_id = url.split('/')[-1]
     return recipe_id
 
-def save_results(data_list):
+def save_results(data_list, fold):
 
     # build df
     df = pd.DataFrame(data_list)
     date = dt.now().strftime('%y%m%d')
 
-    PATH = f'reviews_1_{date}.csv'
+    PATH = f'reviews_{fold}_{date}.csv'
 
     if os.path.exists(PATH):
         # save
@@ -92,7 +92,8 @@ def main():
     # get all user ids
     # userid_set = get_userid_set()
     # userid_set = get_userid_from_recipe_reviews()
-    userid_set = get_userid_from_recipe_reviews_split()
+    fold = 4
+    userid_set = get_userid_from_recipe_reviews_split(fold)
 
     # set options for opening chrome browser in CLI env
     chrome_options = webdriver.ChromeOptions()
@@ -131,7 +132,7 @@ def main():
                     'uid': uid,
                     'user_name': nickname,
                     'history': user_history,
-                }])
+                }], fold)
 
         except UnexpectedAlertPresentException:
             continue
