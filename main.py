@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime as dt
+from datetime import datetime
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -11,6 +11,10 @@ import os
 import re
 from tqdm import tqdm
 
+
+def log_exception(fname, log):
+    with open(fname, 'a+') as log_file:
+        log_file.write(log + "\n")
 
 class getRecipeCrawler:
     def __init__(self, recipe_id):
@@ -57,160 +61,167 @@ def update_list(list1, list2):
     list1[:] = list(set1.union(set2))
     return list1
 
+def create_upper_folder(fpath):
+    folder_path = os.path.dirname(fpath)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"폴더 '{folder_path}' 생성")
+        
 
-def recipe_info(recipe_id, driver):
-
+def recipe_info(args, row, driver):
+    
     recipe_data = {
-        "recipe_id": 0,
+        "recipe_id": None,
+        "recipe_title" : None,
         "recipe_name": None,
         "author_id": None,
         "author_name": None,
-        "ingredient": None,
+        "recipe_method" : None,
+        "recipe_status" : None,
+        "recipe_kind" : None,
         "time_taken": None,
         "difficulty": None,
         "recipe_url": None,
         "portion": None,
-        "food_img_url": None,
-        "reviews": 0,
-        "photo_reviews": 0,
-        "comments": 0,
         "datePublished": None,
+        "food_img_url": None,
+        "ingredient": {},
+        "reviews": None,
+        "photo_reviews": None,
+        "comments": None,
     }
     
+    
+    recipe_id = row['RCP_SNO']
+    
+    recipe_data['recipe_id'] = recipe_id
+    recipe_data['recipe_title'] = row['RCP_TTL']
+    recipe_data['recipe_name'] = row['CKG_NM']
+    recipe_data['author_id'] = row['RGTR_ID']
+    recipe_data['author_name'] = row['RGTR_NM']
+    recipe_data['recipe_method']  = row['CKG_MTH_ACTO_NM']
+    recipe_data['recipe_status']  = row['CKG_STA_ACTO_NM']
+    recipe_data['recipe_kind']  = row['CKG_KND_ACTO_NM']
+    recipe_data['time_taken'] = row['CKG_TIME_NM']
+    recipe_data['difficulty'] = row['CKG_DODF_NM']
+    recipe_data['recipe_url'] = f"https://www.10000recipe.com/recipe/{str(recipe_id)}"
+    recipe_data['portion'] = row['CKG_INBUN_NM']
+    recipe_data['datePublished'] = row['FIRST_REG_DT']
+
     try:
-        recipe_data["recipe_id"] = recipe_id
-        recipe_data["recipe_url"] = f"https://www.10000recipe.com/recipe/{recipe_id}"
         driver.get(recipe_data["recipe_url"])
         time.sleep(3)
         close_popup(driver)
-        driver.maximize_window()
-        # 페이지가 로드될 때까지 대기
+    except:
+        log_exception(args.log_path, str(recipe_id))
+        pass
         
-        try:
-            recipe_info = driver.find_element(
-                By.XPATH, "//script[@type='application/ld+json']"
-            )
-            recipe_txt = json.loads(recipe_info.get_attribute("innerHTML"))
-            # 작성자 id 가져오기
-            author_elem = driver.find_element(By.CLASS_NAME, "user_info2")
-            author_aTag = author_elem.find_elements(By.TAG_NAME, "a")[0]
-            href = author_aTag.get_attribute("href")
-            try:
-                recipe_data["author_id"] = href.split("uid=")[1]
-            except:
-                recipe_data["author_id"] = href.split("cid=")[1]
-                pass
-
-            #breakpoint()
-            # 레시피 관련 요약 정보
-            try:
-                recipe_data["portion"] = driver.find_element(
-                    By.CLASS_NAME, "view2_summary_info1"
-                ).text  # recipe_txt['recipeYield']
-            except:
-                pass
-
-            try:
-                recipe_data["time_taken"] = driver.find_element(
-                    By.CLASS_NAME, "view2_summary_info2"
-                ).text  # recipe_txt['totalTime']
-            except:
-                pass
-            try:
-                recipe_data["difficulty"] = driver.find_element(By.CLASS_NAME, "view2_summary_info3").text
-            except:
-                pass
-
-            # 요리 후기 수
-            recipe_data["recipe_name"] = recipe_txt["name"]
-            recipe_data["author_name"] = recipe_txt["author"]["name"]
-            recipe_data["food_img_url"] = recipe_txt["image"][1]
-            recipe_data["datePublished"] = recipe_txt["datePublished"]
+    # 사진 url
+    try:
+        img_elem= driver.find_element(By.ID, 'main_thumbs')
+        img_url = img_elem.get_attribute('src')
+        recipe_data['food_img_url'] = img_url
+    except:
+        log_exception(args.log_path, str(recipe_id))
+        pass
+        
+    # 재료
+    try:
+        ingredients_data = {}
+        ingredient_elem = driver.find_element(By.ID, 'divConfirmedMaterialArea')
+        ingredient_uls = ingredient_elem.find_elements(By.TAG_NAME, "ul")
+        
+        for ingredient_ul in ingredient_uls:
+            driver.execute_script("arguments[0].scrollIntoView();", ingredient_ul)
             
-            # 재료
-            try:
-                recipe_data["ingredient"] = recipe_txt["recipeIngredient"]
-            except KeyError:
-                try:
-                    ingredient_elems = driver.find_elements(By.TAG_NAME, "dd")
-                    ingredient_lst = []
-                    for elem in ingredient_elems:
-                        if len(elem.text.split(" ")):
-                            ingredient_lst.append(elem.text)
-
-                    recipe_data["ingredient"] = ingredient_lst  # KeyError
-                except Exception as e:
-                    #print(">>>> KeyError + a :", recipe_id)
-                    #breakpoint()
-                    print(recipe_id, e)
-                    pass
-                pass
-
-            # 리뷰, 포토 리뷰, 댓글
-            try:
-                # print('>>> pdb')
-                # breakpoint()
-                reviews_cnt_elems = driver.find_elements(By.ID, "recipeCommentListCount")
-                for reviews_cnt_elem in reviews_cnt_elems:
-                    driver.execute_script("arguments[0].scrollIntoView();", reviews_cnt_elem)
-                    what_text = reviews_cnt_elem.find_element(By.XPATH, "..").text.split(" ")[0]
-                    what_cnt = int(reviews_cnt_elem.text)
-
-                    if what_text == "요리":
-                        recipe_data["reviews"] = what_cnt
-                    elif what_text == "포토":
-                        recipe_data["photo_reviews"] = what_cnt
-                    elif what_text == "댓글":
-                        recipe_data["comments"] = what_cnt
-            except Exception as e:
-                #print(">>> reviews X") # recipe_id : 6909808
-                #breakpoint()
-                print(recipe_id, e)
-                pass
-        except Exception as e:
-            #print(">>> recipe_info X")
-            #breakpoint() # 6909824, 6910570, 6910581, 6911221, 6911538
-            print(recipe_id, e)
+            b_tag = ingredient_ul.find_element(By.TAG_NAME, 'b')
+            b_tag_text = b_tag.text.strip("[]")
+            
+            li_tags = ingredient_ul.find_elements(By.TAG_NAME, 'li')
+            
+            ingredient_data_lst = []
+            for li_tag in li_tags:
+                ingredient_data= {'name': None, 'amount' : None}
+                ingredient_name = li_tag.find_elements(By.TAG_NAME, 'a')[0].text
+                ingredient_amount = li_tag.find_element(By.CLASS_NAME, 'ingre_unit').text
+                ingredient_data['name'] = ingredient_name
+                ingredient_data['amount'] = ingredient_amount
+                
+                ingredient_data_lst.append(ingredient_data)
+            ingredients_data[b_tag_text] = ingredient_data_lst
+        recipe_data["ingredient"] = ingredients_data
+    except:
+        try:
+            recipe_data['ingredient']  = row['CKG_MTRL_ACTO_NM']
+        except:
+            log_exception(args.log_path, str(recipe_id))
             pass
+        pass
 
-    except Exception as e:
-        #print(">>> recipe_id: ", recipe_data["recipe_id"]) # 6910133
-        #breakpoint()
-        print(recipe_id, e)
+    # 리뷰, 포토 리뷰, 댓글
+    try:
+        reviews_cnt_elems = driver.find_elements(By.CLASS_NAME, "view_reply")
+        for reviews_cnt_elem in reviews_cnt_elems:
+            driver.execute_script("arguments[0].scrollIntoView();", reviews_cnt_elem)
+            title_elem = reviews_cnt_elem.find_element(By.CLASS_NAME, "reply_tit")
+            title_text = title_elem.text.split(" ")[0]
+            cnt_elem = reviews_cnt_elem.find_element(By.TAG_NAME, "span")
+            cnt_int = int(cnt_elem.text)
+
+            if title_text == "요리":
+                recipe_data["reviews"] = cnt_int
+            elif title_text == "포토":
+                recipe_data["photo_reviews"] = cnt_int
+            elif title_text == "댓글":
+                recipe_data["comments"] = cnt_int
+    except:
+        log_exception(args.log_path, str(recipe_id))
         pass
 
     return recipe_data
 
 
-def main(args):
-    service = ChromeService(executable_path=r'/usr/bin/chromedriver')
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome(service=service, options=options)
-    
-    df = pd.read_csv(
-        args.data_path, encoding="cp949", low_memory=False, encoding_errors="ignore"
-    )
 
+def main(args):
+    
+    create_upper_folder(args.save_path)
+    create_upper_folder(args.log_path)
+
+    if args.chrome_install :
+        service = ChromeService(ChromeDriverManager().install())
+    else:
+        service = ChromeService(executable_path=r'/usr/bin/chromedriver')
+    
+    if args.test:
+        driver = webdriver.Chrome(service=service)
+        driver.maximize_window()
+    else:
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome(service=service, options=options)
+
+    df = pd.read_csv(
+        args.data_path
+    )
+    
     recipe_data_lst = []
+    
     for idx, row in tqdm(df.iterrows()):
 
-        recipe_id = row["RCP_SNO"]
-        recipe_data = recipe_info(recipe_id, driver)
+        recipe_data = recipe_info(args, row, driver)
         recipe_data_lst.append(recipe_data)
-
         if idx % 1000 == 0:
             new_recipe_data = pd.DataFrame(recipe_data_lst)
             save_recipe_results(args.save_path, new_recipe_data)
             print(" >>> Saved:", args.save_path, idx)
             recipe_data_lst = []
 
-    #breakpoint()
     if recipe_data_lst != []:
         new_recipe_data = pd.DataFrame(recipe_data_lst)
         save_recipe_results(args.save_path, new_recipe_data)
+        print(" >>> Saved:", args.save_path, 'final')
 
     driver.quit()
 
@@ -233,11 +244,30 @@ if __name__ == "__main__":
         help="Save path를 설정할 수 있습니다.",
     )
     arg(
+        "--log_path",
+        type=str,
+        default="log/split/recipe_data_0.txt",
+        help="Save path를 설정할 수 있습니다.",
+    )
+    
+    arg(
         "--webdriver_path",
         type=str,
         default="chromedriver.exe",
         help="Chromedriver path를 설정할 수 있습니다.",
     )
+    
+    arg(
+        "--test",
+        type=bool,
+        default=False,
+        help="test 여부를 설정할 수 있습니다.",
+    )
+    
+    arg("--chrome_install",
+        type=bool,
+        default=True,
+        help="Chrome Driver Manager 로 설치 여부를 설정할 수 있습니다.")
 
     args = parser.parse_args()
     main(args)
