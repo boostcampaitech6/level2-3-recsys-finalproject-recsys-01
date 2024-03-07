@@ -2,6 +2,7 @@ import re, os
 from datetime import datetime as dt
 
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 from selenium import webdriver
@@ -11,6 +12,9 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from bs4 import BeautifulSoup
+
+def get_userid_from_recipe_reviews_split(fold):
+    return np.load(f'./user-jsh/userid_from_recipe_reviews_{fold}.npy')
 
 def get_userid_set():
     # filenames
@@ -62,7 +66,7 @@ def save_results(data_list):
     df = pd.DataFrame(data_list)
     date = dt.now().strftime('%y%m%d')
 
-    PATH = f'recipes_{date}.csv'
+    PATH = f'./recipe-jsh/recipes_{date}.csv'
     if os.path.exists(PATH):
         # save
         df.to_csv(PATH, mode='a', index=False, header=False)
@@ -72,7 +76,8 @@ def save_results(data_list):
 
 def main():
     # get all user ids
-    recipeid_set = get_userid_set()
+    fold = 0
+    recipeid_set = get_userid_from_recipe_reviews_split(fold)
 
     # set options for opening chrome browser in CLI env
     chrome_options = webdriver.ChromeOptions()
