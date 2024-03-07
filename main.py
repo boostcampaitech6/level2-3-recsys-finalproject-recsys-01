@@ -86,9 +86,9 @@ def recipe_info(args, row, driver):
         "datePublished": None,
         "food_img_url": None,
         "ingredient": {},
-        "reviews": None,
-        "photo_reviews": None,
-        "comments": None,
+        "reviews": 0,
+        "photo_reviews": 0,
+        "comments": 0,
     }
     
     
@@ -149,10 +149,10 @@ def recipe_info(args, row, driver):
                 
                 ingredient_data_lst.append(ingredient_data)
             ingredients_data[b_tag_text] = ingredient_data_lst
-        recipe_data["ingredient"] = ingredients_data
+        recipe_data["ingredient"] = str(ingredients_data)
     except:
         try:
-            recipe_data['ingredient']  = row['CKG_MTRL_ACTO_NM']
+            recipe_data['ingredient']  = row['CKG_MTRL_CN']
         except:
             log_exception(args.log_path, str(recipe_id))
             pass
@@ -168,10 +168,10 @@ def recipe_info(args, row, driver):
             cnt_elem = reviews_cnt_elem.find_element(By.TAG_NAME, "span")
             cnt_int = int(cnt_elem.text)
 
-            if title_text == "요리":
-                recipe_data["reviews"] = cnt_int
-            elif title_text == "포토":
+            if title_text == "포토":
                 recipe_data["photo_reviews"] = cnt_int
+            elif title_text == "요리":
+                recipe_data["reviews"] = cnt_int
             elif title_text == "댓글":
                 recipe_data["comments"] = cnt_int
     except:
@@ -206,22 +206,11 @@ def main(args):
         args.data_path
     )
     
-    recipe_data_lst = []
-    
     for idx, row in tqdm(df.iterrows()):
 
         recipe_data = recipe_info(args, row, driver)
-        recipe_data_lst.append(recipe_data)
-        if idx % 1000 == 0:
-            new_recipe_data = pd.DataFrame(recipe_data_lst)
-            save_recipe_results(args.save_path, new_recipe_data)
-            print(" >>> Saved:", args.save_path, idx)
-            recipe_data_lst = []
-
-    if recipe_data_lst != []:
-        new_recipe_data = pd.DataFrame(recipe_data_lst)
+        new_recipe_data = pd.DataFrame([recipe_data])
         save_recipe_results(args.save_path, new_recipe_data)
-        print(" >>> Saved:", args.save_path, 'final')
 
     driver.quit()
 
