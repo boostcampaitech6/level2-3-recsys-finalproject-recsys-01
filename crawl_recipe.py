@@ -14,7 +14,7 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 from bs4 import BeautifulSoup
 
 def get_userid_from_recipe_reviews_split(fold):
-    return np.load(f'./user-jsh/userid_from_recipe_reviews_{fold}.npy')
+    return np.load(f'./user-001/userid_from_recipe_reviews_{fold}.npy')
 
 def get_userid_set():
     # filenames
@@ -60,13 +60,13 @@ def parse_recipe_id(review):
             recipe_id = url.split('/')[-1]
     return recipe_id
 
-def save_results(data_list):
+def save_results(data_list, fold):
 
     # build df
     df = pd.DataFrame(data_list)
     date = dt.now().strftime('%y%m%d')
 
-    PATH = f'./recipe-jsh/recipes_{date}.csv'
+    PATH = f'./user-001/recipes_{fold}_{date}.csv'
     if os.path.exists(PATH):
         # save
         df.to_csv(PATH, mode='a', index=False, header=False)
@@ -76,7 +76,7 @@ def save_results(data_list):
 
 def main():
     # get all user ids
-    fold = 0
+    fold = 7
     recipeid_set = get_userid_from_recipe_reviews_split(fold)
 
     # set options for opening chrome browser in CLI env
@@ -84,7 +84,13 @@ def main():
     chrome_options.add_argument('--headless')  # headless 모드로 실행
 
     # get automative driver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    options = webdriver.ChromeOptions()
+    options.add_argument('--disable-gpu')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')  # sandbox를 사용하지 않는다는 옵션!! 필수
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    driver = webdriver.Chrome(options=options)
     
     # collect data by user id
     for i,uid in enumerate(tqdm(recipeid_set)):
@@ -113,7 +119,7 @@ def main():
                 save_results([{
                     'uid': uid,
                     'recipes': user_recipes,
-                }])
+                }], fold)
         except UnexpectedAlertPresentException:
             continue
 
