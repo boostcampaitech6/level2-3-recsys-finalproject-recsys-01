@@ -35,11 +35,35 @@ def test_데이터소스_생성_정상(host, port, database):
         DataSource(**config)
 
 
-@pytest.mark.parametrize("host, port, database", [
+@pytest.mark.parametrize("host, port, database_name", [
     ('localhost', '27017', 'dev'),
     ('10.0.6.6', '27017', 'prod'),
 ])
-def test_데이터베이스_반환_정상(host, port, database):
+def test_데이터베이스_반환_정상(host, port, database_name):
+    # given
+    config = {
+        'host': host,
+        'port': port,
+        'database_name': database_name
+    }
+    datasource = DataSource(**config)
+
+    # when
+    database = datasource.database()
+
+    # then
+    assert database is not None
+
+
+@pytest.mark.parametrize("host, port, database, collection_name" , [
+    ('localhost', '27017', 'dev', 'users'),
+    ('localhost', '27017', 'dev', 'recipes'),
+    ('localhost', '27017', 'dev', 'ingredients'),
+    ('10.0.6.6', '27017', 'prod', 'users'),
+    ('10.0.6.6', '27017', 'prod', 'recipes'),
+    ('10.0.6.6', '27017', 'prod', 'ingredients'),
+])
+def test_컬렉션_반환_정상(host, port, database, collection_name):
     # given
     config = {
         'host': host,
@@ -49,7 +73,7 @@ def test_데이터베이스_반환_정상(host, port, database):
     datasource = DataSource(**config)
 
     # when
-    result = datasource.database()
+    collection = datasource.collection_with_name_as(collection_name)
 
     # then
-    assert result is not None
+    assert collection is not None
