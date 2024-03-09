@@ -17,8 +17,9 @@ def get_userid_from_recipe_reviews():
 
     # filenames
     crawled_files = [
-        'reviewers_240302.csv', 'reviewers_240303.csv', 
-        'reviewers_240304.csv', 'reviewers_240305.csv', 
+#        'reviewers_240302.csv', 'reviewers_240303.csv', 
+#        'reviewers_240304.csv', 'reviewers_240305.csv', 
+        'reviewers_240309.csv'
     ]
 
     df = pd.concat([pd.read_csv(f) for f in crawled_files], axis=0)
@@ -95,8 +96,6 @@ def main():
     chrome_options.add_argument('--headless')  # headless 모드로 실행
 
     # get automative driver
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(driver_version='122.0.6261.94').install()))
     options = webdriver.ChromeOptions()
     options.add_argument('--disable-gpu')
     options.add_argument('--headless')
@@ -129,7 +128,9 @@ def main():
                     'history': user_history,
                 }])
 
-        except UnexpectedAlertPresentException:
+        except KeyboardInterrupt:
+            break
+        except:
             continue
 
 if __name__ == '__main__':

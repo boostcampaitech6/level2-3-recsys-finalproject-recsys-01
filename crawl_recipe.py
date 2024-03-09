@@ -1,6 +1,7 @@
 import re, os
 from datetime import datetime as dt
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -11,6 +12,18 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import UnexpectedAlertPresentException
 
 from bs4 import BeautifulSoup
+
+def get_userid_from_recipe_reviews():
+
+    # filenames
+    crawled_files = [
+        'reviewers_240309.csv'
+    ]
+
+    df = pd.concat([pd.read_csv(f) for f in crawled_files], axis=0)
+    unique_users = set(np.concatenate(df['reviewers'].apply(eval).values))
+    
+    return unique_users
 
 def get_userid_set():
     # filenames
@@ -72,14 +85,21 @@ def save_results(data_list):
 
 def main():
     # get all user ids
-    recipeid_set = get_userid_set()
+    # recipeid_set = get_userid_set()
+    recipeid_set = get_userid_from_recipe_reviews()
 
     # set options for opening chrome browser in CLI env
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument('--headless')  # headless 모드로 실행
 
     # get automative driver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    options = webdriver.ChromeOptions()
+    options.add_argument('--disable-gpu')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')  # sandbox를 사용하지 않는다는 옵션!! 필수
+    options.add_argument('--disable-blink-features=AutomationControlled')
+
+    driver = webdriver.Chrome(options=options)
     
     # collect data by user id
     for i,uid in enumerate(tqdm(recipeid_set)):
@@ -109,8 +129,11 @@ def main():
                     'uid': uid,
                     'recipes': user_recipes,
                 }])
-        except UnexpectedAlertPresentException:
+        except KeyboardInterrupt:
+            break
+        except:
             continue
+
 
 if __name__ == '__main__':
     main()
