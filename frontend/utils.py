@@ -62,3 +62,12 @@ def menu_tab(login=False, user=None):
         """,
         unsafe_allow_html=True,
     )
+
+def basket_feedback():
+    st.markdown("<div style='text-align: center; font-size: 16px;'>방금 추천받은 장바구니 어땠나요?</div>", unsafe_allow_html=True)
+    st.text("")
+    cols = st.columns([3,1,1,3])
+    with cols[1]:
+        st.button('좋아요')
+    with cols[2]:
+        st.button('싫어요')
