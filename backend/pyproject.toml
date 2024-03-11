@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "finalproject"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["sangwoonoel <sangwoonoel@cau.ac.kr>"]
 readme = "README.md"
