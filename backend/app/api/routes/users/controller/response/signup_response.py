@@ -6,3 +6,9 @@ class SignupResponse(BaseModel):
     password: str
     nickname: str
     email: str
+
+class LoginResponse(BaseModel):
+    _id: str
+
+class FavorRecipesResponse(BaseModel):
+    recipes: list

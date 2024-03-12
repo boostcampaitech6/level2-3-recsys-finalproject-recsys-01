@@ -9,6 +9,6 @@ class UserSignupDTO(BaseModel):
     email: str
 
 class UserLoginDTO(BaseModel):
-    _id: Optional[str]
+    token: str | None = None
     login_id: str
     password: str
