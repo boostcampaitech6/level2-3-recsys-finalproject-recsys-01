@@ -9,7 +9,7 @@ from pages.ResultPage2 import result_page_2
 def recommendation_page():
 
     # 앱 헤더 
-    page_header(False, None)
+    page_header()
 
     # 페이지 구성
     container = st.container(border=True)
