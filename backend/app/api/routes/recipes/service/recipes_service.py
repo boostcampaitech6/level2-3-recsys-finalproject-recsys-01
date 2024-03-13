@@ -15,10 +15,10 @@ def get_recipes_by_recipes_id(recipes_id: List[str]) -> Recipes:
     return recipes
 
 
-def get_ingredients_collections_by_recipes(recipes: Recipes) -> List[Recipes]:
+def get_ingredients_list_by_recipes(recipes: Recipes) -> List[Recipes]:
     # 레시피 별로 재료 리스트 조회: 
     # [Ingredients(ingredients: [Ingredient, Ingredient]), Ingredients(ingredients: [Ingredient, Ingredient])]
-    ingredients_collection = [select_ingredients_by_ingredients_id(recipe.get_ingredients()) for recipe in recipes.get_recipes()]
-    return ingredients_collection
+    ingredients_list = [select_ingredients_by_ingredients_id(recipe.get_ingredients()) for recipe in recipes.get_recipes()]
+    return ingredients_list
     
     
