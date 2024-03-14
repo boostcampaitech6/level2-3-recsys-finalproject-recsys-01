@@ -1,5 +1,5 @@
 import pytest
-from .....app.api.routes.recipes.repository.recipes_repository import select_user_by_user_id, select_recipes_by_recipes_id, select_ingredients_by_ingredients_id
+from .....app.api.routes.recipes.repository.recipes_repository import RecipesRepository
 from.....app.api.routes.recipes.entity.user import User
 from.....app.api.routes.recipes.entity.recipes import Recipes
 from.....app.api.routes.recipes.entity.recipe import Recipe
@@ -9,13 +9,14 @@ from.....app.api.routes.recipes.entity.ingredient import Ingredient
 from fastapi.testclient import TestClient
 from .....app.api.routes.recipes.controller.recipes_controller import recipes_router
 
+recipes_repository = RecipesRepository()
 
 # User Type 확인
 @pytest.mark.parametrize("user_id, output", [
     ('65f0063d141b7b6fd385c7cc', True),
 ])
 def test_select_user_by_user_id_type(user_id, output):
-    user = select_user_by_user_id(user_id)
+    user = recipes_repository.select_user_by_user_id(user_id)
     assert isinstance(user, User) == output
     
 
@@ -51,7 +52,7 @@ def test_select_user_by_user_id_type(user_id, output):
      ),
 ])
 def test_select_user_by_user_id(user_id, output):
-    user = select_user_by_user_id(user_id)
+    user = recipes_repository.select_user_by_user_id(user_id)
     assert user.model_dump() == output
 
 
@@ -60,7 +61,7 @@ def test_select_user_by_user_id(user_id, output):
     (["65f0371e141b7b6fd385c7d8", "65f29506141b7b6fd385c7e9"], True),
 ])
 def test_select_recipes_by_recipes_id_type(recipes_id, output):
-    recipes = select_recipes_by_recipes_id(recipes_id)
+    recipes = recipes_repository.select_recipes_by_recipes_id(recipes_id)
     assert isinstance(recipes, Recipes) == output
     assert isinstance(recipes.get_recipes()[0], Recipe) == output
 
@@ -103,7 +104,7 @@ def test_select_recipes_by_recipes_id_type(recipes_id, output):
     ),
 ])
 def test_select_recipes_by_recipes_id(recipes_id, output):
-    recipes = select_recipes_by_recipes_id(recipes_id)
+    recipes = recipes_repository.select_recipes_by_recipes_id(recipes_id)
     assert recipes.model_dump() == output
     
 
@@ -113,7 +114,7 @@ def test_select_recipes_by_recipes_id(recipes_id, output):
     (["65f29547141b7b6fd385c7eb", "65f2955e141b7b6fd385c7f1"], True),
 ])
 def test_select_ingredients_by_ingredients_id_type(ingredients_id, output):
-    ingredients = select_ingredients_by_ingredients_id(ingredients_id)
+    ingredients = recipes_repository.select_ingredients_by_ingredients_id(ingredients_id)
     assert isinstance(ingredients, Ingredients) == output
     assert isinstance(ingredients.get_ingredients()[0], Ingredient) == output
     
@@ -140,13 +141,14 @@ def test_select_ingredients_by_ingredients_id_type(ingredients_id, output):
     ),
 ])
 def test_select_ingredients_by_ingredients_id(ingredients_id, output):
-    ingredients = select_ingredients_by_ingredients_id(ingredients_id)
+    ingredients = recipes_repository.select_ingredients_by_ingredients_id(ingredients_id)
     assert ingredients.model_dump() == output
     
     
 # API 테스트
 client = TestClient(recipes_router)
 
+# 유저가 요리한 레시피 목록 조회
 @pytest.mark.parametrize("user_id, output", [
     ("65f0063d141b7b6fd385c7cc", 
         {
@@ -182,7 +184,7 @@ def test_get_user_cooked_recipes_by_page(user_id, output):
     assert response.status_code == 200
     assert response.json() == output
     
-
+# 유저가 추천 받은 레시피 목록 조회
 @pytest.mark.parametrize("user_id, output", [
     ("65f0063d141b7b6fd385c7cc", 
         {
@@ -226,7 +228,15 @@ def test_get_user_cooked_recipes_by_page(user_id, output):
     ),
 ])
 def test_get_user_recommended_recipes_by_page(user_id, output):
-    response = client.get(f"/users/{user_id}/recipes/recommended/")
+    response = client.get(f"/users/{user_id}/recipes/recommended")
     assert response.status_code == 200
     assert response.json() == output
 
+
+# 유저가 요리한 레시피 수정
+@pytest.mark.parametrize("user_id, recipes_id, request_body, output", [
+    ('65f0063d141b7b6fd385c7cc', '65f29506141b7b6fd385c7e9', {"feedback": "false"}, 200),
+])
+def test_update_user_recipes_status__by_feedback(user_id, recipes_id, request_body, output):
+    response = client.patch(f"/users/{user_id}/recipes/{recipes_id}/feedback", json = request_body,)
+    assert response.status_code == output
