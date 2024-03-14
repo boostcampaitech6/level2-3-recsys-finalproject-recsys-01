@@ -37,8 +37,7 @@ def test_select_user_by_user_id_type(user_id, output):
             "65f01320141b7b6fd385c7d4"
         ],
         "recommend_history_by_basket": [
-            "65f01320141b7b6fd385c7d4",
-            "65f01320141b7b6fd385c7d4"
+            "65f2bef7141b7b6fd385c810",
         ],
         "feedback_history": [
             "65f0371e141b7b6fd385c7d8",
@@ -150,34 +149,84 @@ client = TestClient(recipes_router)
 
 @pytest.mark.parametrize("user_id, output", [
     ("65f0063d141b7b6fd385c7cc", 
-     {
-  "response": [
-    {
-      "id": "65f0371e141b7b6fd385c7d8",
-      "recipe_name": "매콤한 김치찌개",
-      "ingredient": {
-        "65f04741141b7b6fd385c7da": "김치",
-        "65f047b9141b7b6fd385c7db": "삼겹살"
-      },
-      "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
-      "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
-    },
-    {
-      "id": "65f29506141b7b6fd385c7e9",
-      "recipe_name": "맛있는 제육볶음",
-      "ingredient": {
-        "65f29547141b7b6fd385c7eb": "고추장",
-        "65f2955e141b7b6fd385c7f1": "양파"
-      },
-      "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
-      "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
-    }
-  ]
-}
-     ),
+        {
+            "recipe_list": [
+                {
+                    "id": "65f0371e141b7b6fd385c7d8",
+                    "recipe_name": "매콤한 김치찌개",
+                    "ingredient": {
+                        "65f04741141b7b6fd385c7da": "김치",
+                        "65f047b9141b7b6fd385c7db": "삼겹살"
+                    },
+                    "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
+                    "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
+                },
+                {
+                    "id": "65f29506141b7b6fd385c7e9",
+                    "recipe_name": "맛있는 제육볶음",
+                    "ingredient": {
+                        "65f29547141b7b6fd385c7eb": "고추장",
+                        "65f2955e141b7b6fd385c7f1": "양파"
+                    },
+                    "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
+                    "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
+                }
+            ],
+            "cooked_recipes_id": None,
+            "next_page_url": None
+        }
+    ),
 ])
-def test_read_item(user_id, output):
+def test_get_user_cooked_recipes_by_page(user_id, output):
     response = client.get(f"/users/{user_id}/recipes/cooked")
+    assert response.status_code == 200
+    assert response.json() == output
+    
+
+@pytest.mark.parametrize("user_id, output", [
+    ("65f0063d141b7b6fd385c7cc", 
+        {
+            "recipe_list": [
+                {
+                    "id": "65f0371e141b7b6fd385c7d8",
+                    "recipe_name": "매콤한 김치찌개",
+                    "ingredient": {
+                        "65f04741141b7b6fd385c7da": "김치",
+                        "65f047b9141b7b6fd385c7db": "삼겹살"
+                    },
+                    "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
+                    "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
+                },
+                {
+                    "id": "65f29506141b7b6fd385c7e9",
+                    "recipe_name": "맛있는 제육볶음",
+                    "ingredient": {
+                        "65f29547141b7b6fd385c7eb": "고추장",
+                        "65f2955e141b7b6fd385c7f1": "양파"
+                    },
+                    "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
+                    "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
+                },
+                {
+                    "id": "65f2bef7141b7b6fd385c810",
+                    "recipe_name": "달콤한 불고기",
+                    "ingredient": {
+                        "65f2955e141b7b6fd385c7f1": "양파"
+                    },
+                    "recipe_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
+                    "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2019/03/10/ad0e61fd8b4783a926ebccadd0c1b8c11.jpg"
+                }
+            ],
+            "cooked_recipes_id": [
+                "65f0371e141b7b6fd385c7d8",
+                "65f29506141b7b6fd385c7e9"
+                ],
+            "next_page_url": None
+        }
+    ),
+])
+def test_get_user_recommended_recipes_by_page(user_id, output):
+    response = client.get(f"/users/{user_id}/recipes/recommended/")
     assert response.status_code == 200
     assert response.json() == output
 
