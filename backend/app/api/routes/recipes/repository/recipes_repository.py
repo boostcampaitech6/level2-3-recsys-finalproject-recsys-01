@@ -6,9 +6,10 @@ from ..entity.user import User
 from ..entity.recipes import Recipes
 from ..entity.ingredients import Ingredients
 
+users_collection = data_source.collection_with_name_as("users")
+
 
 def select_user_by_user_id(user_id: str) -> User:
-    users_collection = data_source.collection_with_name_as("users")
     user = users_collection.find_one({"_id": ObjectId(user_id)})
     if user:
         return User(**user)
@@ -30,3 +31,14 @@ def select_ingredients_by_ingredients_id(ingredients_id: List[str]) -> Ingredien
         return ingredients
     raise HTTPException(status_code=404, detail=f"Ingredients not found")
 
+
+def update_cooked_recipes(user_id: str, user_cooked_recipes_id: List[str], user_recommended_recipes_id: List[str]) -> bool:
+    update_result = users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "feedback_history": user_cooked_recipes_id,
+            "recommend_history_by_basket": user_recommended_recipes_id
+        }}
+    )
+    return update_result.modified_count > 0
+    
