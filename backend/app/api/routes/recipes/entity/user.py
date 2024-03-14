@@ -37,3 +37,6 @@ class User(BaseModel):
     
     def get_feedback_history(self) -> List[str]:
         return self.feedback_history
+    
+    def get_recommend_history_by_basket(self) -> List[str]:
+        return self.recommend_history_by_basket
