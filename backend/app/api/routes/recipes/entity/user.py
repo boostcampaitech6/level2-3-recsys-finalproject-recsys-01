@@ -34,10 +34,6 @@ class User(BaseModel):
         },
     )
 
-
-    def get_user_info(self) -> List[str]:
-        return [self.id, self.user_nickname, self.user_name, self.user_email, self.user_password, self.allergy, self.recommend_history_by_model, 
-         self.recommend_history_by_basket, self.feedback_history, self.initial_feedback_history]
     
     def get_feedback_history(self) -> List[str]:
         return self.feedback_history
