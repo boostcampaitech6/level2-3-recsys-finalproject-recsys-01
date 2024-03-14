@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, HTTPException
 from ..service.recipes_service import *
 from ..dto.get_recipes_reponse_list import GetRecipesReponseList
+from ..dto.recipe_status_upadate_request import RecipeStatusUpadateRequest
 
 
 recipes_router = APIRouter()
@@ -37,3 +38,12 @@ def get_user_recommended_recipes_by_page(user_id: str, page_num: int = 0):
     ingredients_list = get_ingredients_list_by_recipes(recipes)
     # 유저가 요리한 요리 표시를 위한 user_cooked_recipes_id 함께 넘기기
     return GetRecipesReponseList(recipes, ingredients_list, user_cooked_recipes_id)
+
+
+@recipes_router.patch("/users/{user_id}/recipes/{recipes_id}/feedback")
+def update_user_recipes_status__by_feedback(user_id: str, recipes_id: str, request: RecipeStatusUpadateRequest):
+    update_result = update_cooked_recipes(user_id, recipes_id, request.feedback)
+    if update_result:
+        return Response(status_code=200)
+    raise HTTPException(status_code=404, detail="User not found")
+
