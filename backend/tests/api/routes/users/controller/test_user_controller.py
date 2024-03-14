@@ -1,7 +1,7 @@
 import pytest
 import requests
 
-from .....app.exception.users.signup_exeption import (
+from ......app.exception.users.signup_exeption import (
     UserSignUpLoginIdMissningException, UserSignUpPasswordMissningException, 
     UserSignUpNicknameMissningException, UserSignUpEmailMissningException,
     UserSignUpInvalidLoginIdException, UserSignUpInvalidPasswordException,

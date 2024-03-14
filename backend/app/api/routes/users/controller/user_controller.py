@@ -59,7 +59,7 @@ async def sign_up(request: SignupRequest) -> JSONResponse:
         password=request.password,
         nickname=request.nickname,
         email=request.email))
-    return JSONResponse(content=response_body.model_dump(), status_code=status.HTTP_200_OK)
+x    return JSONResponse(content=response_body.model_dump(), status_code=status.HTTP_200_OK)
 
 @user_router.post('/api/users/auth')
 async def login(request: LoginRequest) -> Response:
