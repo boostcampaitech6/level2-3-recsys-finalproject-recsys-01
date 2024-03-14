@@ -23,7 +23,7 @@ def select_recipes_by_recipes_id(recipes_id: List[str]) -> Recipes:
     raise HTTPException(status_code=404, detail=f"Recipes not found")
 
 
-def select_ingredients_by_ingredients_id(ingredients_id: List[str]) -> List[Recipes]:
+def select_ingredients_by_ingredients_id(ingredients_id: List[str]) -> Ingredients:
     ingredients_collection = data_source.collection_with_name_as("ingredients")
     ingredients = Ingredients(ingredients = ingredients_collection.find({"_id": { "$in": list(map(ObjectId, ingredients_id))} }))
     if ingredients:
