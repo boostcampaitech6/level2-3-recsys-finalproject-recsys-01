@@ -31,7 +31,8 @@ def get_user_recommended_recipes_by_page(user_id: str, page_num: int = 0):
     user_cooked_recipes_id = get_user_cooked_recipes_id_by_user(user)
     user_recommended_recipes_id = get_user_recommended_recipes_id_by_user(user)
     # 레시피 id 리스트로 각 레시피의 정보 조회
-    recipes = get_recipes_by_recipes_id(user_cooked_recipes_id + user_recommended_recipes_id)
+    recipes_id = user_cooked_recipes_id + user_recommended_recipes_id
+    recipes = get_recipes_by_recipes_id(recipes_id)
     # 레시피로 Ingredients 리스트 조회
     ingredients_list = get_ingredients_list_by_recipes(recipes)
     # 유저가 요리한 요리 표시를 위한 user_cooked_recipes_id 함께 넘기기
