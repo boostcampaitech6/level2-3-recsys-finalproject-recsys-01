@@ -1,5 +1,5 @@
 from typing import List
-from ..repository.recipes_repository import select_user_by_user_id, select_recipes_by_recipes_id, select_ingredients_by_ingredients_id
+from ..repository.recipes_repository import select_user_by_user_id, select_recipes_by_recipes_id, select_ingredients_by_ingredients_id, update_cooked_recipes
 from ..entity.recipes import Recipes
 from ..entity.user import User
 
@@ -30,5 +30,17 @@ def get_ingredients_list_by_recipes(recipes: Recipes) -> List[Recipes]:
     # [Ingredients(ingredients: [Ingredient, Ingredient]), Ingredients(ingredients: [Ingredient, Ingredient])]
     ingredients_list = [select_ingredients_by_ingredients_id(recipe.get_ingredients()) for recipe in recipes.get_recipes()]
     return ingredients_list
-    
+
+
+def update_cooked_recipes(user_id: str, recipes_id: str, feedback: bool):
+    user = get_user_by_user_id(user_id)
+    user_cooked_recipes_id = get_user_cooked_recipes_id_by_user(user)
+    user_recommended_recipes_id = get_user_recommended_recipes_id_by_user(user)
+    if feedback:
+        user_recommended_recipes_id.remove(recipes_id)
+        user_cooked_recipes_id.append(recipes_id)
+        return update_cooked_recipes(user_id, user_cooked_recipes_id, user_recommended_recipes_id)
+    user_cooked_recipes_id.remove(recipes_id)
+    user_recommended_recipes_id.append(recipes_id)
+    return update_cooked_recipes(user_id, user_cooked_recipes_id, user_recommended_recipes_id)
     
