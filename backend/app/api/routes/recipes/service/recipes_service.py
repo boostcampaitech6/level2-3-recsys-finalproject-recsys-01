@@ -1,12 +1,22 @@
 from typing import List
 from ..repository.recipes_repository import select_user_by_user_id, select_recipes_by_recipes_id, select_ingredients_by_ingredients_id
 from ..entity.recipes import Recipes
+from ..entity.user import User
 
 
-def get_user_cooked_recipes(user_id: str) -> List[str]:
+def get_user_by_user_id(user_id: str) -> User:
     user = select_user_by_user_id(user_id)
-    user_cooked_recipes = user.get_feedback_history()
-    return user_cooked_recipes
+    return user
+
+
+def get_user_cooked_recipes_id_by_user(user: User) -> List[str]:
+    user_cooked_recipes_id = user.get_feedback_history()
+    return user_cooked_recipes_id
+
+
+def get_user_recommended_recipes_id_by_user(user: User) -> List[str]:
+    user_recommended_recipes_id = user.get_recommend_history_by_basket()
+    return user_recommended_recipes_id
 
 
 def get_recipes_by_recipes_id(recipes_id: List[str]) -> Recipes: 
