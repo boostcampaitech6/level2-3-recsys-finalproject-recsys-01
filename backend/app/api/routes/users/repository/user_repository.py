@@ -58,3 +58,11 @@ class FoodRepository:
             result['_id'] = str(result['_id'])
             lst.append(result)
         return lst
+    
+class RecommendationRepository:
+    def __init__(self):
+        self.collection = data_source.collection_with_name_as('model_recommendation_histories')
+
+    def find_by_login_id(self, login_id: str) -> list:
+        result = self.collection.find_one({'login_id': login_id})
+        return result['recipe_top_20']

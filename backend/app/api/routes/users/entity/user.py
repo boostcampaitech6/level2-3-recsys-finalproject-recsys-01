@@ -11,3 +11,6 @@ class User(BaseModel):
 class Session(BaseModel):
     _id: Optional[str]
     user_id: str
+
+class Recommendation:
+    recipe_id: str

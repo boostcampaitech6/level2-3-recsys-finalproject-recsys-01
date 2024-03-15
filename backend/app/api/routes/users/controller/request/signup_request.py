@@ -74,6 +74,6 @@ class UserFavorRecipesRequest(BaseModel):
 
     @validator('recipes')
     def validate_login_id(cls, recipes: list[str]):
-        if len(recipes) < MINIMUM_FAVOR_RECIPE_COUNT:
-            raise ValueError(f"좋아하는 레시피는 최소 {MINIMUM_FAVOR_RECIPE_COUNT} 개 이상이어야 합니다: {len(recipes)}")
+        if len(set(recipes)) < MINIMUM_FAVOR_RECIPE_COUNT:
+            raise ValueError(f"좋아하는 레시피는 최소 {MINIMUM_FAVOR_RECIPE_COUNT} 개 이상이어야 합니다: {len(set(recipes))}")
         return recipes
