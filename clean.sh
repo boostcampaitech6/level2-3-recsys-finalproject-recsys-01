@@ -1,0 +1,1 @@
+OMP_NUM_THREADS=16 CUDA_VISIBLE_DEVICES=0 python crawling/clean_na.py --data_path data/recipe_data_all/recipe_data_na.csv --save_path data/recipe_data_na_solved.csv --log_path log/recipe_data_na.txt
