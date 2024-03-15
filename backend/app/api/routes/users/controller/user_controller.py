@@ -14,7 +14,7 @@ from ..dto.user_dto import UserSignupDTO, UserLoginDTO
 
 class UserController:
     def __init__(self, user_service: UserService):
-        self.service: UserService = user_service
+        self.user_service: UserService = user_service
     
     async def sign_up(self, signup_request: SignupRequest) -> SignupResponse:
         return SignupResponse(
