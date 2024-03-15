@@ -1,6 +1,7 @@
 from typing import List
 from ..repository.recipes_repository import RecipesRepository
 from ..entity.recipes import Recipes
+from ..entity.ingredients import Ingredients
 from ..entity.user import User
 
 
@@ -30,7 +31,7 @@ class RecipesService:
         return recipes
 
 
-    def get_ingredients_list_by_recipes(self, recipes: Recipes) -> List[Recipes]:
+    def get_ingredients_list_by_recipes(self, recipes: Recipes) -> List[Ingredients]:
         # 레시피 별로 재료 리스트 조회: 
         # [Ingredients(ingredients: [Ingredient, Ingredient]), Ingredients(ingredients: [Ingredient, Ingredient])]
         ingredients_list = [
