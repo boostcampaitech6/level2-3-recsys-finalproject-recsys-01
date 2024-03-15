@@ -18,7 +18,7 @@ class UserController:
     
     async def sign_up(self, signup_request: SignupRequest) -> SignupResponse:
         return SignupResponse(
-            **dict(self.service.sign_up(
+            **dict(self.user_service.sign_up(
                 UserSignupDTO(**dict(signup_request))
             ))
         )
