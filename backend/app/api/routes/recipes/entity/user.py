@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List
-from .....utils.pyobject_id import PyObjectId
+from utils.pyobject_id import PyObjectId
 
 
 class User(BaseModel):

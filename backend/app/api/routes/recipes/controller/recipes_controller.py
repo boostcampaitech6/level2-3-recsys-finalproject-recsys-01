@@ -8,7 +8,7 @@ recipes_router = APIRouter()
 recipes_service = RecipesService()
 
 @recipes_router.get(
-    "/users/{user_id}/recipes/cooked", 
+    "/api/users/{user_id}/recipes/cooked", 
     response_description="유저가 요리한 레시피 목록"
     )
 def get_user_cooked_recipes_by_page(user_id: str, page_num: int = 0):
@@ -24,7 +24,7 @@ def get_user_cooked_recipes_by_page(user_id: str, page_num: int = 0):
 
 
 @recipes_router.get(
-    "/users/{user_id}/recipes/recommended", 
+    "/api/users/{user_id}/recipes/recommended", 
     response_description="유저가 추천받은 레시피 목록"
     )
 def get_user_recommended_recipes_by_page(user_id: str, page_num: int = 0):
@@ -41,7 +41,7 @@ def get_user_recommended_recipes_by_page(user_id: str, page_num: int = 0):
     return GetRecipesReponseList(recipes, ingredients_list, user_cooked_recipes_id)
 
 
-@recipes_router.patch("/users/{user_id}/recipes/{recipes_id}/feedback")
+@recipes_router.patch("/api/users/{user_id}/recipes/{recipes_id}/feedback")
 def update_user_recipes_status__by_feedback(user_id: str, recipes_id: str, request: RecipeStatusUpadateRequest):
     update_result = recipes_service.update_cooked_recipes(user_id, recipes_id, request.feedback)
     if update_result:
