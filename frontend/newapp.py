@@ -4,6 +4,7 @@ from common import init, page_header
 from basket_signup import signup_container
 from basket_login import login_container
 from main import main_page
+from main_2 import main_page_2
 from recommendation import recommendation_page
 
 def home():
@@ -12,7 +13,7 @@ def home():
 
 def home2():
     page_header()
-    st.write('login 됨')
+    main_page_2()
 
 def login():
     page_header()
