@@ -4,6 +4,7 @@ from common import init, page_header
 from basket_signup import signup_container
 from basket_login import login_container
 from main import main_page
+from recommendation import recommendation_page
 
 def home():
     page_header()
@@ -21,15 +22,20 @@ def signup():
     page_header()
     signup_container()
 
+def recommendation():
+    page_header()
+    recommendation_page()
+
 if ('is_authenticated' not in st.session_state) and ('page_info' not in st.session_state):
     init()
 
-if (not st.session_state.is_authenticated) and (st.session_state.page_info == 'home'):
+value = st.session_state.get('key', 'default_value')
+if (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'home'):
     home()
-elif (not st.session_state.is_authenticated) and (st.session_state.page_info == 'signup'):
+elif (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'signup'):
     signup()
-elif (not st.session_state.is_authenticated) and (st.session_state.page_info == 'login'):
+elif (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'login'):
     login()
-elif (st.session_state.is_authenticated) and (st.session_state.page_info == 'home2'):
+elif st.session_state.get('is_authenticated', False) and (st.session_state.get('page_info', '-') == 'home2'):
     home2()
 

@@ -3,7 +3,7 @@ from streamlit_extras.stylable_container import stylable_container
 
 from common import set_login_page, set_signup_page
 
-def main_page():
+def welcome_container():
     container3_1 = stylable_container(
                 key="container_with_border",
                 css_styles="""
@@ -23,6 +23,7 @@ def main_page():
         with cols[2]:
             st.button(f"로그인", on_click=set_login_page, key=f'login_{st.session_state.page_info}', type='primary')
 
+def howto_container():
     container3_2 = st.container(border = True)
 
     with container3_2:
@@ -31,3 +32,8 @@ def main_page():
         left_co, cent_co,last_co = st.columns((1, 8, 1))
         with cent_co:
             st.image('img/howto.png')
+
+def main_page():
+
+    welcome_container()
+    howto_container()
