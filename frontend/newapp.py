@@ -30,13 +30,12 @@ def recommendation():
 if ('is_authenticated' not in st.session_state) and ('page_info' not in st.session_state):
     init()
 
-value = st.session_state.get('key', 'default_value')
-if (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'home'):
-    home()
-elif (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'signup'):
+if (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'signup'):
     signup()
 elif (not st.session_state.get('is_authenticated', False)) and (st.session_state.get('page_info', '-') == 'login'):
     login()
-elif st.session_state.get('is_authenticated', False) and (st.session_state.get('page_info', '-') == 'home2'):
+elif not st.session_state.get('is_authenticated', False):
+    home()
+elif st.session_state.get('is_authenticated', False):
     home2()
 

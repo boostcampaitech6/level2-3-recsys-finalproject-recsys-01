@@ -2,6 +2,7 @@ import streamlit as st
 
 from common import init, page_header 
 from newapp import recommendation
+from result_page import result_page
 from main import welcome_container
 #from recommendation import recommendation_page
 
@@ -19,9 +20,15 @@ def back_to_home_container():
         with cols[1]:
             st.link_button('메인페이지로 >>', st.session_state.url_main, type='primary')
 
+
+print(st.session_state.page_info)
 if not st.session_state.is_authenticated:
     page_header()
     back_to_home_container()
 
+elif st.session_state.get('is_authenticated', False) and (st.session_state.get('page_info', '-') == 'result_page_1'):
+    result_page()
+
 else:
     recommendation()
+
