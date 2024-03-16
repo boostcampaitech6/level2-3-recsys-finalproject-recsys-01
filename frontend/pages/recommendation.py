@@ -20,8 +20,6 @@ def back_to_home_container():
         with cols[1]:
             st.link_button('메인페이지로 >>', st.session_state.url_main, type='primary')
 
-
-print(st.session_state.page_info)
 if not st.session_state.is_authenticated:
     page_header()
     back_to_home_container()
