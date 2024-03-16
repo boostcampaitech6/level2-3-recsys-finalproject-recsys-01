@@ -3,9 +3,11 @@ import streamlit as st
 from common import init, page_header 
 from basket_signup import signup_container
 from basket_login import login_container
+from main import main_page
 
 def home():
     page_header()
+    main_page()
 
 def home2():
     page_header()
@@ -18,7 +20,6 @@ def login():
 def signup():
     page_header()
     signup_container()
-
 
 if ('is_authenticated' not in st.session_state) and ('page_info' not in st.session_state):
     init()
