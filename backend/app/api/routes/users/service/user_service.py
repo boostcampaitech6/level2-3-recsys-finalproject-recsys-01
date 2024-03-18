@@ -5,7 +5,9 @@ from fastapi import HTTPException
 from datetime import datetime, timedelta
 
 from ..entity.user import User
-from ..repository.user_repository import UserRepository, SessionRepository, FoodRepository, RecommendationRepository
+from ..repository.user_repository import (
+    UserRepository, SessionRepository, FoodRepository, RecommendationRepository, BasketRepository
+)
 from ..dto.user_dto import (
     UserSignupDTO, UserLoginDTO,
 )
@@ -17,11 +19,13 @@ class UserService:
                  session_repository: SessionRepository,
                  food_repository: FoodRepository,
                  recommendation_repository: RecommendationRepository,
+                 basket_repository: BasketRepository,
                  ):
         self.user_repository: UserRepository = user_repository
         self.session_repository: SessionRepository = session_repository
         self.food_repository: FoodRepository = food_repository
         self.recommendation_repository : RecommendationRepository = recommendation_repository
+        self.basket_repository: BasketRepository = basket_repository
 
     def sign_up(self, sign_up_request: UserSignupDTO) -> UserSignupDTO:
         return self.user_repository.insert_one(sign_up_request)
@@ -64,7 +68,7 @@ class UserService:
         return self._optimized_results(recipe_infos, price_infos, price)
     
     def save_basket(self, user_id, price, datetime, recommended_basket) -> None:
-        self.recommendation_repository.save({
+        self.basket_repository.save({
             'user_id': user_id,
             'price': price,
             'datetime': datetime,
@@ -122,12 +126,12 @@ class UserService:
         prob.solve()
 
         # 결과 출력
-        print("Status:", pulp.LpStatus[prob.status])
+        # print("Status:", pulp.LpStatus[prob.status])
         
-        for dish in dishes:
-            print(f"Make {dish}:", y[dish].varValue)
-        for ingredient in price_infos:
-            print(f"Use Ingredient {ingredient}:", x[ingredient].varValue)
+        # for dish in dishes:
+        #     print(f"Make {dish}:", y[dish].varValue)
+        # for ingredient in price_infos:
+        #     print(f"Use Ingredient {ingredient}:", x[ingredient].varValue)
         result_dish = [dish for dish in dishes if y[dish].varValue == 1]
         result_ingredient = [ingredient for ingredient in price_infos if x[ingredient].varValue == 1]
 

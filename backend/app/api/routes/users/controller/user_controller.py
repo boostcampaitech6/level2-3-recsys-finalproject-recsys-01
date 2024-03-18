@@ -12,7 +12,9 @@ from .request.signup_request import SignupRequest, LoginRequest, UserFavorRecipe
 from .response.signup_response import SignupResponse, LoginResponse, FavorRecipesResponse
 from ..service.user_service import UserService
 from app.api.routes.recipes.service.recipes_service import RecipesService
-from ..repository.user_repository import UserRepository, SessionRepository, FoodRepository, RecommendationRepository
+from ..repository.user_repository import (
+    UserRepository, SessionRepository, FoodRepository, RecommendationRepository, BasketRepository
+)
 from ..dto.user_dto import UserSignupDTO, UserLoginDTO
 
 class UserController:
@@ -41,7 +43,11 @@ class UserController:
         return self.user_service.is_nickname_usable(nickname)
     
     async def favor_recipes(self, page_num: int) -> list:
-        return self.user_service.favor_recipes(page_num)
+        foods, has_next = self.user_service.favor_recipes(page_num)
+        return {
+            'foods': foods,
+            'next_page_url': f'/api/users/foods?page_num={page_num+1}' if has_next else ''
+        }
     
     async def save_favor_recipes(self, login_id: str, request: UserFavorRecipesRequest) -> None:
         return self.user_service.save_favor_recipes(login_id, request)
@@ -70,7 +76,7 @@ class UserController:
         return recommended_basket
     
     def _basket_with_infos(self, recommended_basket: dict, recipe_infos: Recipes):
-        logging.debug(recommended_basket)
+        logging.debug('recommended_basket', recommended_basket)
         # logging.debug(recipe_infos)
 
         recipe_info_list = [recipe.as_basket_form() for recipe in recipe_infos.get_recipes() if recipe.get_id() in recommended_basket['recipe_list']]
@@ -93,7 +99,8 @@ user_controller = UserController(
         UserRepository(),
         SessionRepository(),
         FoodRepository(),
-        RecommendationRepository()),
+        RecommendationRepository(),
+        BasketRepository()),
     RecipesService()
 )
 user_router = APIRouter()
@@ -140,6 +147,7 @@ async def validate_duplicate_info(
 @user_router.get('/api/users/foods')
 async def favor_recipes(page_num: int=1) -> Response:
     response_body = await user_controller.favor_recipes(page_num)
+    logging.debug(response_body)
     return JSONResponse(content=response_body, status_code=status.HTTP_200_OK)
 
 # POST /api/users/{user_id}/foods
