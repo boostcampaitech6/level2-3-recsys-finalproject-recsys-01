@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Query, Request, Response, status
+from fastapi import APIRouter, Query, Response, status
 from typing import Optional
+from datetime import datetime as dt
 
 import logging
 from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel
 
+from api.routes.recipes.entity.recipes import Recipes
 from .request.signup_request import SignupRequest, LoginRequest, UserFavorRecipesRequest
 from .response.signup_response import SignupResponse, LoginResponse, FavorRecipesResponse
 from ..service.user_service import UserService
@@ -52,10 +54,38 @@ class UserController:
         recipe_infos = self.recipe_service.get_recipes_by_recipes_id(top_k_recipes)
 
         # ingredient 정보 가져오기
-        price_infos = self.recipe_service.get_prices_by_ingredients_id(recipe_infos[''])
+        price_infos = self.recipe_service.get_prices_by_ingredients_id(recipe_infos.get_total_ingredients_set())
 
-        basket_info = self.user_service.recommended_basket(recipe_infos)
-        return
+        # 장바구니 추천
+        recipes = recipe_infos.get_recipes()
+        recipes = {recipe.get_id(): recipe.get_ingredients() for recipe in recipes}
+
+        recommended_basket = self.user_service.recommended_basket(recipes, price_infos, price)
+
+        # 추천 장바구니 결과 저장
+        self.user_service.save_basket(user_id, price, dt.now(), recommended_basket)
+
+        recommended_basket = self._basket_with_infos(recommended_basket, recipe_infos)
+
+        return recommended_basket
+    
+    def _basket_with_infos(self, recommended_basket: dict, recipe_infos: Recipes):
+        logging.debug(recommended_basket)
+        # logging.debug(recipe_infos)
+
+        recipe_info_list = [recipe.as_basket_form() for recipe in recipe_infos.get_recipes() if recipe.get_id() in recommended_basket['recipe_list']]
+        # logging.debug('Basket Form', recipe_info_list)
+
+        total_ingredients = self.recipe_service.get_ingredients_by_ingredients_id(recipe_infos.get_total_ingredients_set())
+        ingredient_info_list = [ingredient.as_basket_form() for ingredient in total_ingredients if ingredient.get_id() in recommended_basket['ingredient_list']]
+        # logging.debug('Ingredient Basket Form', ingredient_info_list)
+
+        basket_with_infos = {
+            'basket_price': 0,
+            'ingredient_list': ingredient_info_list,
+            'recipe_list': recipe_info_list,
+        }
+        return basket_with_infos
 
 
 user_controller = UserController(
@@ -120,7 +150,7 @@ async def save_favor_recipes(user_id: str, request: UserFavorRecipesRequest) -> 
 
 @user_router.post('/api/users/{user_id}/recommendations')
 async def get_recommendation(user_id: str, price: int) -> JSONResponse:
-    response_body = {
+    '''{
         "basket_price": 46000,
         "ingredient_list": [
             {
@@ -132,18 +162,7 @@ async def get_recommendation(user_id: str, price: int) -> JSONResponse:
                 "img_link": "https://health.chosun.com/site/data/img_dir/2024/01/19/2024011902009_0.jpg",
                 "market_url":
                 "https://www.coupang.com/vp/products/4874444452?itemId=6339533080&vendorItemId=73634892616&pickType=COU_PICK&q=%EB%B8%8C%EB%A1%9C%EC%BD%9C%EB%A6%AC&itemsCount=36&searchId=891d0b69dc8f452daf392e3db2482732&rank=1&isAddedCart="
-            },
-            {
-                "ingredient_id": 11,
-                "ingredient_name": "초고추장",
-                "ingredient_amount": 500,
-                "ingredient_unit": "g",
-                "ingredient_price": 5000,
-                "img_link":
-                "https://image7.coupangcdn.com/image/retail/images/4810991441045098-31358d86-eff6-45f4-8ed6-f36b642e8944.jpg",
-                "market_url":
-                "https://www.coupang.com/vp/products/6974484284?itemId=17019959259&vendorItemId=3000138402&q=%EC%B4%88%EA%B3%A0%EC%B6%94%EC%9E%A5&itemsCount=36&searchId=d5538b6e86d04be3938c98ef1655df85&rank=1&isAddedCart="
-            }
+            },...
         ],
         "recipe_list": [
             {
@@ -157,46 +176,8 @@ async def get_recommendation(user_id: str, price: int) -> JSONResponse:
                 ],
                 "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2015/05/18/1fb83f8578488ba482ad400e3b62df49.jpg",
                 "recipe_url": "https://www.10000recipe.com/recipe/128671"
-            },
-            {
-                "recipe_id": 2,
-                "recipe_name": "두부새우전",
-                "ingredient": [
-                    {"ingredient_id": "3",
-                    "ingredient_name": "두부"},
-                    {"ingredient_id": "4",
-                    "ingredient_name": "새우"}
-                ],
-                "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2015/06/09/8d7a003794ac7ab77e5777796d9c20dd.jpg",
-                "recipe_url": "https://www.10000recipe.com/recipe/128932"
-            },
-            {
-                "recipe_id": 3,
-                "recipe_name": "알밥",
-                "ingredient": [
-                    {"ingredient_id": "5",
-                    "ingredient_name": "밥"},
-                    {"ingredient_id": "6",
-                    "ingredient_name": "날치알"}
-                ],
-                "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2015/06/09/54d80fba5f2615d0a6bbd960adf4296c.jpg",
-                "recipe_url": "https://www.10000recipe.com/recipe/131871"
-            },
-            {
-                "recipe_id": 4,
-                "recipe_name": "현미호두죽",
-                "ingredient": [
-                    {"ingredient_id": "5",
-                    "ingredient_name": "밥"},
-                    {"ingredient_id": "7",
-                    "ingredient_name": "현미"},
-                    {"ingredient_id": "8",
-                    "ingredient_name": "호두"}
-                ],
-                "recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2017/07/19/993a1efe45598cf296076874df509bfe1.jpg",
-                "recipe_url": "https://www.10000recipe.com/recipe/128671"
-            }
+            },...
         ]
-    }
+    }'''
     response_body = await user_controller.recommended_basket(user_id, price)
     return JSONResponse(content=response_body, status_code=status.HTTP_200_OK)
