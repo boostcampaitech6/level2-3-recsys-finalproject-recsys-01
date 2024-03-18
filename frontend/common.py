@@ -10,7 +10,7 @@ def init():
     st.session_state.is_authenticated = False 
     st.session_state.page_info = 'home'
     st.session_state.url_prefix = 'http://localhost:8000'
-    st.session_state.url_main = 'http://175.45.194.96:8503/'
+    st.session_state.url_main = 'http://175.45.194.96:8502/'
 
 def set_logout_page():
     st.session_state.is_authenticated = False 

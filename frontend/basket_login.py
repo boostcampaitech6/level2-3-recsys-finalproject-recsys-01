@@ -45,7 +45,8 @@ def check_password():
             st.session_state.page_info = 'home2'
             st.session_state["token"] = {
                 'user_id': st.session_state['user_id'],
-                'token': response['token'] 
+                'token': response['token'], 
+                'is_first_login': response['is_first_login']
             }
 
             del st.session_state["password"]  # Don't store the user_id or password.
