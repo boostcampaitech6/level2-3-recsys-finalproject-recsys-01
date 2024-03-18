@@ -8,4 +8,5 @@ if not st.session_state.is_authenticated:
     page_header()
     back_to_home_container()
 else:
+    page_header()
     user_history_page()
