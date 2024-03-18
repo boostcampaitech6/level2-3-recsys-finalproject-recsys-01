@@ -5,6 +5,7 @@ from basket_signup import signup_container
 from basket_login import login_container
 from main import main_page
 from main_2 import main_page_2
+from signinpage_2 import choose_food_page
 from recommendation import recommendation_page
 
 def home():
@@ -27,6 +28,10 @@ def recommendation():
     page_header()
     recommendation_page()
 
+def choose_food():
+    page_header()
+    choose_food_page()
+
 if ('is_authenticated' not in st.session_state) and ('page_info' not in st.session_state):
     init()
 
@@ -37,5 +42,8 @@ elif (not st.session_state.get('is_authenticated', False)) and (st.session_state
 elif not st.session_state.get('is_authenticated', False):
     home()
 elif st.session_state.get('is_authenticated', False):
-    home2()
+    if st.session_state['token']['is_first_login']:
+        choose_food()
+    else:
+        home2()
 
