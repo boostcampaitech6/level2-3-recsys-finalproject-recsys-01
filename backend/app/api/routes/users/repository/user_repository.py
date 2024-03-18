@@ -52,17 +52,32 @@ class FoodRepository:
 
     def find_foods(self, page_num: int, page_size: int=16) -> list:
         skip_count: int = (page_num - 1) * page_size
-        results = self.collection.find().sort([('_id', pymongo.ASCENDING)]).skip(skip_count).limit(page_size)
+        results = self.collection.find().sort([('_id', pymongo.ASCENDING)]).skip(skip_count).limit(page_size + 1)
+        # logging.debug(results)
+        results = list(results)
+        total_size = len(results)
+        logging.debug('total_size', total_size)
         lst = []
-        for result in results:
+        for i, result in enumerate(results):
+            if i == page_size: break
             result['_id'] = str(result['_id'])
+            del result['ingredients']
             lst.append(result)
-        return lst
+
+        return lst, (total_size > page_size)
     
 class RecommendationRepository:
     def __init__(self):
         self.collection = data_source.collection_with_name_as('model_recommendation_histories')
 
     def find_by_login_id(self, login_id: str) -> list:
-        result = self.collection.find_one({'login_id': login_id})
-        return result['recipe_top_20']
+        result = self.collection.find_one({'id': login_id})
+        return result['recommended_item']
+    
+class BasketRepository:
+    def __init__(self):
+        self.collection = data_source.collection_with_name_as('baskets')
+
+    def save(self, recommendation):
+        self.collection.insert_one(recommendation)
+    
