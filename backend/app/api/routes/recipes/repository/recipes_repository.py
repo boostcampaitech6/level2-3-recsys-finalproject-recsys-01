@@ -14,8 +14,8 @@ class RecipesRepository:
         self.ingredients_collection = data_source.collection_with_name_as("ingredients")
         
 
-    def select_user_by_user_id(self, user_id: str) -> User:
-        user = self.users_collection.find_one({"_id": ObjectId(user_id)})
+    def select_user_by_user_id(self, login_id: str) -> User:
+        user = self.users_collection.find_one({"login_id": login_id})
         if user:
             return User(**user)
         raise HTTPException(status_code=404, detail=f"User {id} not found")
@@ -35,9 +35,9 @@ class RecipesRepository:
         raise HTTPException(status_code=404, detail=f"Ingredients not found")
 
 
-    def update_cooked_recipes(self, user_id: str, user_cooked_recipes_id: List[str], user_recommended_recipes_id: List[str]) -> bool:
+    def update_cooked_recipes(self, login_id: str, user_cooked_recipes_id: List[str], user_recommended_recipes_id: List[str]) -> bool:
         update_result = self.users_collection.update_one(
-            {"_id": ObjectId(user_id)},
+            {"login_id": login_id},
             {"$set": {
                 "feedback_history": user_cooked_recipes_id,
                 "recommend_history_by_basket": user_recommended_recipes_id

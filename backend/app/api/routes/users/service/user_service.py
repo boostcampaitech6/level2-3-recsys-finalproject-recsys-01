@@ -1,6 +1,7 @@
 import uuid
 import pulp
 
+from fastapi import HTTPException
 from datetime import datetime, timedelta
 
 from ..entity.user import User
@@ -28,7 +29,7 @@ class UserService:
     def login(self, login_request: UserLoginDTO) -> UserLoginDTO:
         user = self.user_repository.find_one({'login_id': login_request.login_id, 'password': login_request.password})
         if user is None:
-            raise ValueError("아이디와 비밀번호가 일치하지 않습니다.")
+            raise HTTPException(status_code=400, detail="아이디와 비밀번호가 일치하지 않습니다.")
         user = User(**dict(user))
         
         token = str(uuid.uuid4())
@@ -37,12 +38,12 @@ class UserService:
     
     def is_login_id_usable(self, login_id: str) -> bool:
         if self.user_repository.find_one({'login_id': login_id}) is not None:
-            raise ValueError(f"중복되는 아이디 입니다: {login_id}")
+            raise HTTPException(status_code=409, detail=f"중복되는 아이디 입니다: {login_id}")
         return True
     
     def is_nickname_usable(self, nickname: str) -> bool:
         if self.user_repository.find_one({'nickname': nickname}) is not None:
-            raise ValueError(f"중복되는 닉네임 입니다: {nickname}")
+            raise HTTPException(status_code=409, detail=f"중복되는 닉네임 입니다: {nickname}")
         return True
     
     def favor_recipes(self, page_num: int) -> list:
@@ -53,14 +54,14 @@ class UserService:
 
     def top_k_recipes(self, login_id: str, price: int) -> list:
         # user에 inference된 recipes
-        return self.recommendation_repository.find({'login_id': login_id})
+        return self.recommendation_repository.find_by_login_id(login_id)
     
-    def recommended_basket(self, recipe_infos: dict, price: int) -> dict:
+    def recommended_basket(self, recipe_infos: dict, price_infos: dict, price: int) -> dict:
         # 입력값 파싱
-        recipe_requirement_infos, price_infos = self._parse(recipe_infos)
+        # recipe_requirement_infos, price_infos = self._parse(recipe_infos)
 
         # 이진 정수 프로그래밍
-        return self._optimized_results(recipe_requirement_infos, price_infos, price)
+        return self._optimized_results(recipe_infos, price_infos, price)
 
     def _parse(self, recipe_infos: dict):
         recipe_requirement_infos, price_infos = None, None

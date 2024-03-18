@@ -8,7 +8,9 @@ class SignupResponse(BaseModel):
     email: str
 
 class LoginResponse(BaseModel):
-    _id: str
+    token: str
+    login_id: str
+    password: str
 
 class FavorRecipesResponse(BaseModel):
     recipes: list
