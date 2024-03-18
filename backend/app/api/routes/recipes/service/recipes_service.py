@@ -55,3 +55,6 @@ class RecipesService:
     def get_prices_by_ingredients_id(self, ingredients_id: List[str]):
         ingredients = self.recipes_repository.select_ingredients_by_ingredients_id(ingredients_id).get_ingredients()
         return {ingredient.get_id(): ingredient.get_price() for ingredient in ingredients}
+    
+    def get_ingredients_by_ingredients_id(self, ingredients_id: List[str]):
+        return self.recipes_repository.select_ingredients_by_ingredients_id(ingredients_id).get_ingredients()
