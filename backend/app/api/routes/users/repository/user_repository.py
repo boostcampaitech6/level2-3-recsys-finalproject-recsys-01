@@ -48,11 +48,11 @@ class SessionRepository:
     
 class FoodRepository:
     def __init__(self):
-        self.collection = data_source.collection_with_name_as('foods')
+        self.collection = data_source.collection_with_name_as('recipes')
 
-    def find_foods(self, page_num: int, page_size: int=10) -> list:
+    def find_foods(self, page_num: int, page_size: int=16) -> list:
         skip_count: int = (page_num - 1) * page_size
-        results = self.collection.find().sort([('name', pymongo.ASCENDING)]).skip(skip_count).limit(page_size)
+        results = self.collection.find().sort([('_id', pymongo.ASCENDING)]).skip(skip_count).limit(page_size)
         lst = []
         for result in results:
             result['_id'] = str(result['_id'])
