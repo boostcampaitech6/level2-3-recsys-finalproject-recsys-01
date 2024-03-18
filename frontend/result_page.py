@@ -15,8 +15,8 @@ def display_ingredients_in_rows_of_four(ingredients):
                 st.markdown(f'<a href="{ingredient["img_link"]}" target="_blank"><img src="{ingredient["img_link"]}" alt="Your Image" width=100 height=100/></a>', unsafe_allow_html=True)
 
             with cols[1]:
-                st.write(ingredient['ingredient_name'])
-                st.write(ingredient['ingredient_amount'], ingredient['ingredient_unit'])
+                st.write(ingredient['ingredient_name'], ingredient['ingredient_amount'], ingredient['ingredient_unit'])
+                st.write(round(ingredient['ingredient_price']), '원')
             
             with cols[-1]:
                 st.link_button('구매', ingredient['market_url'], type='primary')
@@ -95,7 +95,7 @@ def result_page():
         display_ingredients_in_rows_of_four(data['ingredient_list'])
         total_price = sum([ingredient['ingredient_price'] for ingredient in data['ingredient_list']])
 
-        st.markdown(f"<h5 style='text-align: center;'>예상 총 금액: {total_price} 원</h5>", unsafe_allow_html=True)
+        st.markdown(f"<h5 style='text-align: center;'>예상 총 금액: {round(total_price)} 원</h5>", unsafe_allow_html=True)
         
         st.divider()
 
