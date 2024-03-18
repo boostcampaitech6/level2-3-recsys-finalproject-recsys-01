@@ -7,7 +7,7 @@ class Recipe(BaseModel):
     id: PyObjectId = Field(alias='_id', default=None)
     food_name: str
     recipe_name: str
-    ingredient: List[PyObjectId] = []
+    ingredients: List[PyObjectId] = []
     time_taken: int
     difficulty: str
     recipe_url: str
@@ -49,7 +49,7 @@ class Recipe(BaseModel):
     
     
     def get_ingredients(self):
-        return self.ingredient
+        return self.ingredients
     
     
     def as_basket_form(self):
@@ -69,7 +69,7 @@ class Recipe(BaseModel):
         return {
             'recipe_id': self.id,
             'recipe_name': self.recipe_name,
-            'ingredient': self.ingredient,
+            'ingredient': self.ingredients,
             'recipe_img_url': self.recipe_img_url,
             'recipe_url': self.recipe_url,
         }
