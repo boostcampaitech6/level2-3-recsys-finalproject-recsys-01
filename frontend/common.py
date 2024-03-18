@@ -6,7 +6,6 @@ import streamlit_antd_components as sac
 random_chars = lambda: ''.join(random.choices(string.ascii_letters + string.digits, k=5))
 
 def init():
-    print('init!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     st.session_state.is_authenticated = False 
     st.session_state.page_info = 'home'
     st.session_state.url_prefix = 'http://localhost:8000'
@@ -15,14 +14,13 @@ def init():
 def set_logout_page():
     st.session_state.is_authenticated = False 
     st.session_state.page_info = 'home'
+    del st.session_state["password_correct"]
 
 def set_login_page():
     st.session_state.page_info = 'login'
 
 def set_signup_page():
     st.session_state.page_info = 'signup'
-    print('signup_page')
-    print(st.session_state.page_info)
 
 def login_button():
     cols = st.columns(2)

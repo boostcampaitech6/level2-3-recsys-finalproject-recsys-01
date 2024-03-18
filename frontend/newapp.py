@@ -47,3 +47,5 @@ elif st.session_state.get('is_authenticated', False):
     else:
         home2()
 
+print(st.session_state.is_authenticated)
+print(st.session_state.page_info)

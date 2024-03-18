@@ -39,9 +39,8 @@ def check_password():
 
         if status_code == 200:
             # 페이지 전환을 위해
-            st.session_state.is_authenticated = True
-
             st.session_state["password_correct"] = True
+            st.session_state.is_authenticated = True
             st.session_state.page_info = 'home2'
             st.session_state["token"] = {
                 'user_id': st.session_state['user_id'],
@@ -52,9 +51,7 @@ def check_password():
             del st.session_state["password"]  # Don't store the user_id or password.
 
         else:
-
             st.session_state["password_correct"] = False
-            print(status_code)
 
             if status_code == 400:
                 st.session_state.msg = "password incorrect"
