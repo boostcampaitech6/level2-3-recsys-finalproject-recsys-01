@@ -7,11 +7,11 @@ from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel
 
-from api.routes.recipes.entity.recipes import Recipes
+from app.api.routes.recipes.entity.recipes import Recipes
 from .request.signup_request import SignupRequest, LoginRequest, UserFavorRecipesRequest
 from .response.signup_response import SignupResponse, LoginResponse, FavorRecipesResponse
 from ..service.user_service import UserService
-from api.routes.recipes.service.recipes_service import RecipesService
+from app.api.routes.recipes.service.recipes_service import RecipesService
 from ..repository.user_repository import UserRepository, SessionRepository, FoodRepository, RecommendationRepository
 from ..dto.user_dto import UserSignupDTO, UserLoginDTO
 
