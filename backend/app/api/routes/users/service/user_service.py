@@ -62,10 +62,15 @@ class UserService:
 
         # 이진 정수 프로그래밍
         return self._optimized_results(recipe_infos, price_infos, price)
-
-    def _parse(self, recipe_infos: dict):
-        recipe_requirement_infos, price_infos = None, None
-        return recipe_requirement_infos, price_infos
+    
+    def save_basket(self, user_id, price, datetime, recommended_basket) -> None:
+        self.recommendation_repository.save({
+            'user_id': user_id,
+            'price': price,
+            'datetime': datetime,
+            'ingredients': recommended_basket['ingredient_list'],
+            'recipes': recommended_basket['recipe_list'],
+            'basket_price': 0})
 
     def _optimized_results(self, 
                            recipe_requirement_infos: dict,
@@ -78,10 +83,6 @@ class UserService:
         # 문제 인스턴스 생성
         prob = pulp.LpProblem("MaximizeNumberOfDishes", pulp.LpMaximize)
 
-        # ingredients_info = {
-        #     'A': {'price': 70, 'amount': 5},
-        #     'B': {'price': 30, 'amount': 2},
-        #     'C': {'price': 20, 'amount': 2}}
         # ingredients_price = {'신김치':  7000, '돼지고기': 5000, '양파': 3000, '두부': 1500, '애호박': 2000, '청양고추': 1000, '계란': 6000, '밀가루':  3000}
         # 식재료 가격 및 판매단위 변수 (0 또는 1의 값을 가짐)
         x = pulp.LpVariable.dicts("ingredient", price_infos.keys(), cat='Binary') # 재료 포함 여부
@@ -97,25 +98,25 @@ class UserService:
         # requirements = {'돼지고기김치찌개': ['신김치', '돼지고기', '양파', '두부'], '된장찌개': ['두부', '애호박', '청양고추', '양파'], '애호박전': ['애호박', '계란', '밀가루']}
 
         # 식재료 제한: 각 요리를 최대한 살 수 있는 한도
-        a = {ingredient: (MAX_PRICE//info['price'])*info['amount'] \
-                                            for ingredient, info in price_infos.items()}
-        print(a)
+        # a = {ingredient: (MAX_PRICE//info['price'])*info['amount'] \
+        #                                     for ingredient, info in price_infos.items()}
+        # print(a)
 
         # 목표 함수 (최대화하고자 하는 요리의 수)
         prob += pulp.lpSum([y[dish] for dish in dishes])
 
         # 비용 제약 조건
-        prob += pulp.lpSum([price_infos[i]['price']*x[i] for i in price_infos]) <= MAX_PRICE
+        prob += pulp.lpSum([price_infos[i]*x[i] for i in price_infos]) <= MAX_PRICE
 
         # 요리별 식재료 제약 조건
         for dish in dishes:
-            for ingredient in recipe_requirement_infos[dish].keys():
+            for ingredient in recipe_requirement_infos[dish]:
                 prob += (x[ingredient] >= y[dish])
 
         # 정량 제약 조건: 요리에 사용되는 재료의 총합은 각 재료의 상한을 넘지 못함
-        for ingredient in price_infos.keys():
-            total_amount = pulp.lpSum([y[dish] * requirement[ingredient] for dish, requirement in recipe_requirement_infos.items() if ingredient in requirement])
-            prob += (total_amount <= a[ingredient] * x[ingredient])
+        # for ingredient in price_infos.keys():
+        #     total_amount = pulp.lpSum([y[dish] * requirement[ingredient] for dish, requirement in recipe_requirement_infos.items() if ingredient in requirement])
+        #     prob += (total_amount <= a[ingredient] * x[ingredient])
 
         # 문제 풀기
         prob.solve()

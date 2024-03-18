@@ -64,5 +64,8 @@ class RecommendationRepository:
         self.collection = data_source.collection_with_name_as('model_recommendation_histories')
 
     def find_by_login_id(self, login_id: str) -> list:
-        result = self.collection.find_one({'login_id': login_id})
-        return result['recipe_top_20']
+        result = self.collection.find_one({'id': login_id})
+        return result['recommended_item']
+    
+    def save(self, recommendation):
+        self.collection.insert_one(recommendation)
