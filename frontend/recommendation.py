@@ -1,4 +1,21 @@
 import streamlit as st
+import requests
+
+def set_result_page_2():
+    st.session_state['page_info'] = 'result_page_2'
+
+def post_recommendation():
+    full_url = st.session_state.url_prefix + '/api/users/{user_id}/recommendations?price={price}'
+    formatted_url = full_url.format(user_id=st.session_state.token['user_id'], price=st.session_state.price)
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {st.session_state.token["token"]}',
+    }
+
+    data = requests.post(formatted_url, headers=headers)
+    st.session_state.recommendation_result = data.json()
+    st.session_state['page_info'] = 'result_page_1'
 
 def recommendation_page():
 
@@ -30,10 +47,13 @@ def recommendation_page():
         with cols[2]:
             st.write("예산: ", st.session_state.price, '원')
 
-
-        cols = st.columns(3)
-
-        with cols[1]:
-            button2 = st.button("장바구니 추천받기", type="primary")
-            if button2:
-                st.session_state['page_info'] = 'result_page_1'
+        if 'recommendation_result' in st.session_state:
+            cols = st.columns([3,2,3,3])
+            with cols[1]:
+                button1 = st.button("이전 추천보기", on_click=set_result_page_2)
+            with cols[2]:
+                button2 = st.button("장바구니 추천받기", type="primary", on_click=post_recommendation)
+        else:
+            cols = st.columns([2,1.5,2])
+            with cols[1]:
+                button2 = st.button("장바구니 추천받기", type="primary", on_click=post_recommendation)

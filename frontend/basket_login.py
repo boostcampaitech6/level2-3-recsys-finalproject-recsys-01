@@ -39,6 +39,8 @@ def check_password():
 
         if status_code == 200:
             # 페이지 전환을 위해
+            if 'recommendation_result' in st.session_state:
+                del st.session_state['recommendation_result']
             st.session_state["password_correct"] = True
             st.session_state.is_authenticated = True
             st.session_state.page_info = 'home2'

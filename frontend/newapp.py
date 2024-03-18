@@ -6,7 +6,6 @@ from basket_login import login_container
 from main import main_page
 from main_2 import main_page_2
 from signinpage_2 import choose_food_page
-from recommendation import recommendation_page
 
 def home():
     page_header()
@@ -23,10 +22,6 @@ def login():
 def signup():
     page_header()
     signup_container()
-
-def recommendation():
-    page_header()
-    recommendation_page()
 
 def choose_food():
     page_header()

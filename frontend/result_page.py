@@ -3,6 +3,9 @@ import math
 import streamlit as st
 import requests
 
+def set_recommendation():
+    st.session_state['page_info'] = 'recommendation'
+
 def display_ingredients_in_rows_of_four(ingredients):
     for ingredient in ingredients:
         sub_container = st.container(border=True)
@@ -76,7 +79,8 @@ def result_page():
 #    url = api_prefix + "users/{user_id}/previousrecommendation"
 #    formatted_url = url.format(user_id=st.session_state.user)
 #    data = get_response(formatted_url)
-    data = post_recommendation()
+    #data = post_recommendation()
+    data = st.session_state.recommendation_result
 
     # 페이지 구성
     container = st.container(border=True)
@@ -104,4 +108,9 @@ def result_page():
         display_recipes_in_rows_of_four(data['recipe_list'])
 
         st.text("\n\n")
-        basket_feedback()
+
+        st.divider()
+        st.markdown("<h4 style='text-align: center;'>다른 예산으로도 추천받아 볼까요?</h4>", unsafe_allow_html=True)
+        cols = st.columns([2, 3, 1])
+        with cols[1]:
+            button2 = st.button("추천받으러 가기 >>", type="primary", on_click=set_recommendation)
