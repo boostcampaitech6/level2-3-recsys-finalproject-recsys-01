@@ -48,7 +48,6 @@ def patch_feedback(user_id, recipe_id, current_state):
         }
     response = requests.patch(url.format(user_id=st.session_state.token['user_id'], recipe_id=recipe_id), json=data)
     print(f'status code: {response.status_code}')
-    st.rerun()
 
 def show_feedback_button(recipe_id, user_feedback):
 
