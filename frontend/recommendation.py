@@ -30,7 +30,7 @@ def recommendation_page():
         cols = st.columns([1,5,1])
 
         if 'price' not in st.session_state:
-            st.session_state.price = 10000
+            st.session_state.price = 50000
 
         def handle_change():
                st.session_state.price = st.session_state.price_slider
@@ -38,7 +38,7 @@ def recommendation_page():
         with cols[1]:
 
             st.slider(
-                label='price', min_value=10000, max_value=1000000, value=50000, step=5000,
+                label='price', min_value=10000, max_value=200000, value=50000, step=5000,
                 on_change=handle_change, key='price_slider'
             )
 
