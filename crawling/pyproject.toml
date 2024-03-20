@@ -10,6 +10,7 @@ python = "^3.10"
 pymongo = "^4.6.2"
 python-dotenv = "^1.0.1"
 pydantic = "^2.6.4"
+pandas = "^2.2.1"
 
 
 [build-system]
