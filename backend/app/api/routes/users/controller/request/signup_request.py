@@ -4,7 +4,7 @@ from pydantic import BaseModel, validator
 
 MINIMUM_LOGIN_ID_LENGTH = 5
 MINIMUM_PASSWORD_LENGTH = 8
-MINIMUM_FAVOR_RECIPE_COUNT = 10
+MINIMUM_FAVOR_RECIPE_COUNT = 5
 
 class SignupRequest(BaseModel):
     login_id: str
