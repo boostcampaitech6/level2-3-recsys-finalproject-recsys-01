@@ -1,0 +1,27 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version = "0.1.0"
+update_changelog_on_bump = true
+major_version_zero = true
+
+[tool.poetry]
+name = "frontend"
+version = "0.1.0"
+description = "basket recommendation front end"
+authors = ["Judy <twndus1362@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[tool.poetry.group.dev.dependencies]
+streamlit = "^1.32.2"
+streamlit-antd-components = "^0.3.2"
+streamlit-extras = "^0.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
