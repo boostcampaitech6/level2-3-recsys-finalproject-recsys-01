@@ -2,12 +2,15 @@ import time, sys
 import multiprocessing
 import concurrent.futures
 import pandas as pd
+import logging
+from logging.handlers import QueueHandler, QueueListener
 
 from datetime import datetime as dt
 from pydantic import BaseModel
 from pymongo.collection import Collection
 from openai import OpenAI
 from tqdm import tqdm
+from bson import ObjectId
 
 from database.data_source import data_source
 from database.data_source import data_source
@@ -124,11 +127,25 @@ class Preprocess:
                     pbar.update()
 
     def multi_processing_run(self):
-        with multiprocessing.Pool(processes=8) as pool:
-            result = pool.imap(self.run, self.data)
-            
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
 
-    def run(self, data):
+        queue = multiprocessing.Queue()
+        queue_handler = QueueHandler(queue)
+
+        logger.addHandler(queue_handler)
+
+        listener = QueueListener(queue, logger)
+        listener.start()
+
+        logging.info()
+
+        with multiprocessing.Pool(processes=8) as pool:
+            pool.map(self.run, self.data)
+
+        listener.stop()
+
+    def run(self):
         # 1. 데이터 로드
         # 2.1. recipe 단위 인스턴스 생성
             # 'recipe_id', 'recipe_title', 'recipe_name', 'author_id', 'author_name',
@@ -138,7 +155,8 @@ class Preprocess:
         
         ingredients_count = 0
 
-        for idx, row in tqdm(data.iterrows(), total = data.shape[0]):
+        for idx, row in tqdm(self.data.iterrows(), total = self.data.shape[0], desc="Multi-processed"):
+            # logging.info(f"Processed: {idx} / {self.data.shape[0]}")
             if self.recipe_repository.find_one({'recipe_name': row['recipe_title']}):
                 continue
 
@@ -189,31 +207,38 @@ class Preprocess:
         self.ingredients_count = ingredients_count
 
     
-    def rename_ingredient_names(self, batch_size: int=500) -> int:
+    def rename_ingredient_names(self, batch_size: int=30) -> int:
         # batch_size개 ingredients 조회
+        self.ingredients_count = self.ingredient_repository.count_documents({})
         skip = 0
         total_iter_count = self.ingredients_count // batch_size + 1
         modified_count = 0
 
-        for _ in tqdm(range(total_iter_count)):
+        for i in tqdm(range(total_iter_count)):
             # batch_size개씩 문서를 조회하여 가져옴
-            batch_ingredients = self.recipe_repository.find({}, {'name':1}).skip(skip).limit(batch_size)
+            batch_ingredients = self.ingredient_repository\
+                .find({}, {'name':1})\
+                    .sort({'name':1})\
+                        .skip(skip).limit(batch_size)
 
-            # name만 반환
-            ingredient_names = [ingredient['name'] for ingredient in batch_ingredients]
+            ingredient_names: list[dict] = list(batch_ingredients)
 
-            # ingredients name solar 변환
-            ingredient_names = self.llm_parsed_ingredients(ingredient_names)
-            
-            # name 내 space 제거
-            ingredient_names = Preprocess.without_space(ingredient_names)
+            try:
+                # name 내 space 제거
+                ingredient_names = Preprocess.without_space(ingredient_names)
+                
+                # ingredients name solar 변환
+                ingredient_names = self.llm_parsed_ingredients(ingredient_names)
 
-            # 기존 이름 업데이트
-            for name in ingredient_names:
-                for old_name, new_name in name.items():
-                    result = self.ingredient_repository.update_many({'name': old_name}, {'$set': {'name': new_name}})
+                # 기존 이름 업데이트
+                for ingredient in ingredient_names:
+                    result = self.ingredient_repository.update_one({'_id': ObjectId(ingredient['_id'])}, {'$set': {'name': ingredient['name']}})
                     modified_count += result.modified_count
-    
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            except:
+                continue
+
             # 다음 조회를 위해 skip 값을 업데이트
             skip += batch_size
         
@@ -260,7 +285,7 @@ class Preprocess:
                 messages=[
                     {
                     "role": "system",
-                    "content": "사용자가 한국 이커머스 사이트에서 식재료를 검색하여 구매하려고 해. 사용자가 입력하는 식재료명은 직접 검색어로 입력하였을 때에 식재료와 잘 매칭되지 않을 수 있어서, 검색이 가능한 형태로 변형하고 싶어. 검색 가능한 키워드로 바꿔주는 파이썬 딕셔너리를 반환해줘. 딕셔너리의 형태는 {<기존식재료명1>: <변형할 식재료명1>, <기존식재료명2>: <변형할 식재료명2>, ...} 으로 부탁해. 식재료명은 모두 한국어로 해주고, 변형이 어려운 식재료의 경우 변형할 식재료 명을 None으로 입력해도 좋아"
+                    "content": "사용자가 한국 이커머스 사이트에서 식재료를 검색하여 구매하려고 해. 사용자가 입력하는 식재료명은 직접 검색어로 입력하였을 때에 식재료와 잘 매칭되지 않을 수 있어서, 검색이 가능한 형태로 변형하고 싶어. 검색 가능한 키워드로 바꿔주는 파이썬 딕셔너리를 반환해줘. 딕셔너리의 형태는 {<기존식재료명1>: <변형할 식재료명1>, <기존식재료명2>: <변형할 식재료명2>, ...} 으로 부탁해. 변환된 식재료명은 모두 한국어로 해주고, 변형이 어려운 식재료의 경우 변형할 식재료 명을 None으로 입력해도 좋아. 단위는 빼줘. 예를 들어 2공기밥 이면 밥으로 해줘."
                     },
                     {
                     "role": "user",
@@ -278,29 +303,32 @@ class Preprocess:
         ingredient_names = Preprocess._names_of(ingredients)
 
         # solar stream 생성
-        stream = Preprocess._llm_stream(ingredient_names)
+        stream = self._llm_stream(ingredient_names)
 
         retry_count = 0
         while stream is None:
             if retry_count == 10:
                 raise ValueError('재시도 횟수 초과')
             time.sleep(2)
-            stream = Preprocess._llm_stream(ingredient_names)
+            stream = self._llm_stream(ingredient_names)
             print(f"재시도 {retry_count}")
             retry_count += 1
 
         # 결과 파싱
-        llm_dict = Preprocess._parsed_llm_output(stream)
+        llm_dict = self._parsed_llm_output(stream)
         
+        print("[LLM]:",llm_dict)
         # dict 형태로 변환: 에러시 오류..
         try:
             llm_dict = eval(llm_dict)
         except:
-            with open(f'llm_output/error_.txt', 'a') as file:
+            with open(f'llm_output/error_{self.run_time}.txt', 'a') as file:
                 file.write(str({
-                    'input': ingredients,
+                    'input': ingredient_names,
                     'output': llm_dict
                 }))
+            print('Error', llm_dict)
+            return []
         
         # 생성된 매핑 딕셔너리로 기존 dict name replace
         replaced_ingredients = Preprocess._replaced_name_ingredients(ingredients, llm_dict)
@@ -321,8 +349,7 @@ class Preprocess:
 
         return ingredients
     
-    @staticmethod
-    def _parsed_llm_output(stream) -> str:
+    def _parsed_llm_output(self, stream) -> str:
         output = []
         for chunk in stream:
             if chunk.choices[0].delta.content is not None:
@@ -330,13 +357,13 @@ class Preprocess:
                 # print(content, end="")
                 output.append(content)
 
-        # print("\n-----------")
+        print("\n-----------")
         output = "".join(output)
-        # print(output)
+        print(output)
         start_idx, end_idx = output.find('{'), output.find('}')
         output = output[start_idx:end_idx+1]
 
-        with open(f'llm_output/_.txt', 'a') as file:
+        with open(f'llm_output/llm_output_{self.run_time}.txt', 'a') as file:
             file.write(output)
         
         return output
@@ -410,6 +437,10 @@ if __name__ == '__main__':
 
     count = sys.argv[-1]
 
-    preprocess = Preprocess(f'recipe_data_merged_{count}.csv')
+    preprocess = Preprocess(f'recipie_data_merged.csv')
 
-    preprocess.run()
+    # preprocess.run()
+
+    modified_count = preprocess.rename_ingredient_names()
+
+    print("Modified Ingredients Count: ", modified_count)
