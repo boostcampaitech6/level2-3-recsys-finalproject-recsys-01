@@ -15,6 +15,18 @@ import os
 import re
 from tqdm import tqdm
 
+
+def log_exception(fname, log):
+    with open(fname, 'a+') as log_file:
+        log_file.write(log + "\n")
+
+
+def create_upper_folder(fpath):
+    folder_path = os.path.dirname(fpath)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"폴더 '{folder_path}' 생성")
+        
 def iso_format_time(current_time):
     return current_time.strftime("%Y-%m-%dT%H:%M")
 
@@ -37,11 +49,20 @@ class PriceCrawler:
     def crawl_price(self):
 
         elem = self.driver.find_element(By.XPATH, "//*[@id='page-content-wrapper']/div[6]/div/div[4]/div[1]")
-        try:
+        divs = elem.find_elements(By.XPATH, "./div")
+        
+        if len(divs) >= 6:
             divs = elem.find_elements(By.XPATH, "./div")[:6] # 상위 6개만
-        except:
+        elif len(divs) > 0:
             divs = elem.find_elements(By.XPATH, "./div")
-            pass
+        else:
+            # 검색 결과 0개인 경우
+            min_price_document = {'_id' : self.id,
+                        'product_name': None,
+                        'date': None,
+                        'price_url' : None,
+                        'img_url' : None}
+            return min_price_document
         
         
         min_price = float('inf')
@@ -73,6 +94,9 @@ class PriceCrawler:
 def main(args):
     # MongoDB 연결 설정
     # client = MongoClient('mongodb://localhost:27017/')
+    
+    create_upper_folder(args.log_path)
+    
     client = MongoClient(args.mongo_client)
     db = client['dev']  # 데이터베이스 선택
     collection = db['ingredients']  # 컬렉션 선택
@@ -104,8 +128,14 @@ def main(args):
                 crawler = PriceCrawler(id = document['_id'], query=document['name'])
                 crawler.launch_crawler(driver)
                 crawled_document = crawler.crawl_price()
-            except:
-                print('doc:', document)
+            except Exception as e:
+                log_exception(args.log_path, str(document['_id']))
+                
+                crawled_document = {'_id' : document['_id'],
+                        'product_name': None,
+                        'date': None,
+                        'price_url' : None,
+                        'img_url' : None}
                 pass
         
         # insert 하기
@@ -115,14 +145,11 @@ def main(args):
             try:
                 new_collection.update_one({'_id': document['_id']},  {"$set": crawled_document}, upsert=True)
             except:
-                print('doc:', document)
-                print('crawled doc: ', crawled_document)
+                log_exception(args.log_path, str(document['_id']))
                 pass
         except Exception as e:
             # breakpoint()
-            print('error: ', e)
-            print('doc:', document)
-            print('crawled doc: ', crawled_document)
+            log_exception(args.log_path, str(document['_id']))
             pass
 
 
@@ -131,6 +158,7 @@ if __name__ == '__main__':
     arg = parser.add_argument
 
     arg("--mongo_client", type=str, default="mongodb://10.0.7.6:27017/")
+    arg("--log_path", type=str, default = "log/price_db_error.txt")
     
     args = parser.parse_args()
     main(args)
