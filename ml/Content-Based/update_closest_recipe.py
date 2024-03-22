@@ -11,7 +11,7 @@ import faiss
 def main():
     client = MongoClient(host='10.0.7.6', port=27017)
     db = client.dev
-    collection = db['recipes']
+    collection = db['train_recipes']
 
     # 업데이트
     print('before update: ', collection.count_documents({}))
