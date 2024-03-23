@@ -23,15 +23,70 @@ class Interaction:
         self.trarin_inter_collection: Collection = client[f'{database}']['train_inter']
         self.train_user_collection: Collection = client[f'{database}']['train_users']
         self.recipe_collection: Collection = client[f'{database}']['recipes']
+        self.train_recipe_collection: Collection = client[f'{database}']['train_recipes']
 
     def crawl(self, target_date: date):
         return self._review_crawl(target_date=target_date), self._recipe_crawl()
 
     def _recipe_crawl(self):
+         # get automative driver
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+ 
+        driver = webdriver.Chrome(options=options)
+        
+        # collect data by user id
+        for i,uid in enumerate(tqdm(self._recipe_sons())):
+            try:
+                html_source = Interaction.get_html_source(driver, uid)
+                soup = BeautifulSoup(html_source, 'html.parser')
+                
+                # total recipe count for pagination
+                num_recipe = soup.find('div', 'myhome_cont').find('li', 'active').find('p', 'num').text
+                num_recipe = re.sub(r'\D', '', num_recipe) # 숫자 아닌 값 제거; decimal point(,) 제거
+                num_recipe = int(num_recipe)
+                
+                next_page_num: int = num_recipe // 20
+                user_recipes = list()
+                user_recipes.extend(Interaction.parse_user_recipes(soup))
+
+                for page_no in range(2, next_page_num+2):
+                    # parsing
+                    next_page_source = Interaction.get_html_source(driver, uid, page_no)
+                    soup = BeautifulSoup(next_page_source, 'html.parser')
+
+                    # parse review by recipes
+                    user_recipes.extend(Interaction.parse_user_recipes(soup))
+        
+                if len(user_recipes) > 0:
+                    save_results([{
+                        'uid': uid,
+                        'recipes': user_recipes,
+                    }])
+            except KeyboardInterrupt:
+                break
+            except:
+                continue
         return {
             'user_count': 0,
             'interaction_count': 0
         }
+    
+    def get_recipe_html_source(driver, uid:str='pingky7080', page_no=1):
+        url = f'https://m.10000recipe.com/profile/recipe.html?uid={uid}&page={page_no}'
+        driver.get(url) # url 접속
+        driver.implicitly_wait(3)
+
+        return driver.page_source
+
+    def parse_user_recipes(soup):
+        user_recipes = list()
+        for recipe in soup.find('div', 'recipe_list').find_all('div', 'media'):
+            recipe_id = Interaction.parse_recipe_id(recipe)
+            if len(recipe_id) <= 0: continue 
+            user_recipes.append(recipe_id)
+
+        return user_recipes
 
     def _review_crawl(self, target_date: date):
         # get automative driver
@@ -102,8 +157,11 @@ class Interaction:
                 recipe_id = url.split('/')[-1]
         return recipe_id
     
-    def _user_uids(self, limit: int=10):
+    def _user_uids(self, limit: int=10000):
         return [user['uid'] for user in self.train_user_collection.find().sort({'uid':1}).limit(limit)]
+    
+    def _recipe_sons(self, limit: int=10000):
+        return [recipe['sno'] for recipe in self.train_recipe_collection.find().sort({'sno':1}.limit(limit))]
 
 def crawl_interaction(**kwargs):
     execution_date = kwargs.get('execution_date')
@@ -135,7 +193,7 @@ with DAG(
         task_id="crawl_interaction",
         python_callable=crawl_interaction,
         depends_on_past=False,
-        owner="judy",
+        owner="charlie",
         retries=3,
         retry_delay=timedelta(minutes=5), 
     )
