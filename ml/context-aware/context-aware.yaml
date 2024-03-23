@@ -1,0 +1,33 @@
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+
+load_col:
+    inter: [user_id, item_id]
+    user: [user_id] 
+    item: [item_id, recipe_title, author_id, recipe_method, recipe_status, recipe_kind, time_taken]
+
+data_path: /dev/shm/data
+dataset: BasketRecommendation
+
+epochs: 20
+train_batch_size: 64
+
+train_neg_sample_args: {
+    'distribution': 'uniform',
+    'sample_num': 1,
+    'dynamic': False,
+    'candidate_num': 0 
+    }
+
+stopping_step: 3
+learning_rate: 0.001
+
+eval_args: 
+    group_by: user
+
+metrics: ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision']
+topk: 20
+valid_metric: Recall@20
+embedding_size: 64
+dropout_prob: 0.5
+mlp_hidden_size: [200, 200, 200]
