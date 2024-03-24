@@ -62,7 +62,6 @@ def sasrec_inference(modelpath: str, user_id_and_feedbacks: list, k: int=20, bat
 
     return recommended_result
 
-
 if __name__ == '__main__':
 
     # 설정 파일과 모델 저장 경로 설정
