@@ -5,7 +5,40 @@ from pymongo import MongoClient
 
 from db_config import db_host, db_port
 
-def fetch_user_history(result_type='recipe_sno'):
+def fetch_user_history(user_id, result_type='recipe_sno'):
+
+    # db setting
+    client = MongoClient(host=db_host, port=db_port)
+    db = client.dev
+
+    # user
+    user_id_and_feedbacks = []
+    for u in db['users'].find({'_id':ObjectId(user_id)}): # 원랜 여기가 find()
+        # initial_feedback이 있음
+        feedbacks = u['initial_feedback_history']
+        # 추가 피드백 있는 경우
+        if 'feedback_history' in u:
+            feedbacks.append(u['feedback_history'])
+        # 피드백 _id를 recipe_sno 로 변경
+        recipe_snos = []
+        for recipe in feedbacks:
+            for r in db['recipes'].find({'_id': recipe}):
+                recipe_snos.append(r['recipe_sno'])
+
+        if result_type == 'recipe_sno':
+            user_id_and_feedbacks.append({
+                '_id': str(u['_id']),
+                'feedbacks': recipe_snos,
+                })
+        else:
+            user_id_and_feedbacks.append({
+                '_id': str(u['_id']),
+                'feedbacks': [str(feedback) for feedback in feedbacks],
+                })
+
+    return user_id_and_feedbacks
+
+def fetch_user_histories(result_type='recipe_sno'):
 
     # db setting
     client = MongoClient(host=db_host, port=db_port)

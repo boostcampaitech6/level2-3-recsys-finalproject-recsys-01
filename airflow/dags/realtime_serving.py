@@ -2,18 +2,19 @@ from datetime import datetime as dt
 from datetime import timedelta
 
 from airflow import DAG
-from airflow.utils.dates import days_ago
 from airflow.operators.python import PythonOperator
 
-from db_operations import fetch_user_histories, update_model_recommendations, cb_inference, blending_results
+from db_operations import fetch_user_history, update_model_recommendations, cb_inference, blending_results
 from recbole_inference import sasrec_inference 
 
-def fetch_and_push_user_histories(result_type:str=None, **context):
+def fetch_and_push_user_history(result_type:str=None, **context):
+    conf = context.get('dag_run').conf
+    user_id = conf.get('user_id')
     if result_type:
-        user_id_and_feedbacks = fetch_user_histores(result_type)
+        user_id_and_feedbacks = fetch_user_history(user_id, result_type)
         context["ti"].xcom_push(key='user_id_and_feedbacks_cb', value=user_id_and_feedbacks)
     else:
-        user_id_and_feedbacks = fetch_user_histories()
+        user_id_and_feedbacks = fetch_user_history(user_id)
         context["ti"].xcom_push(key='user_id_and_feedbacks_hybrid', value=user_id_and_feedbacks)
 
 def hybrid_inference(**context):
@@ -57,17 +58,15 @@ def save_results_blended(collection_name, input_type, **context):
     update_model_recommendations(recommended_results, collection_name, input_type=input_type)
 
 with DAG(
-        dag_id="batch_inference",
-        description="batch inference of all active users using BERT4Rec",
-        start_date=days_ago(5), # DAG 정의 기준 2일 전부터 시작합니다. 
-        schedule_interval="0 2 * * *", # 매일 2시에 시작
+        dag_id="realtime_serving",
+        description="realtime serving for new user",
         tags=["basket_recommendation", "inference"],
         ) as dag:
 
     # get active user 
     t1 = PythonOperator(
-        task_id="fetch_and_push_user_histories_for_hybrid",
-        python_callable=fetch_and_push_user_histories,
+        task_id="fetch_and_push_user_history_for_hybrid",
+        python_callable=fetch_and_push_user_history,
         depends_on_past=False, 
         owner="judy",
         retries=3,
@@ -99,8 +98,8 @@ with DAG(
 
     # get active user 
     t4 = PythonOperator(
-        task_id="fetch_and_push_user_histories_for_cb",
-        python_callable=fetch_and_push_user_histories,
+        task_id="fetch_and_push_user_history_for_cb",
+        python_callable=fetch_and_push_user_history,
         depends_on_past=False, 
         owner="judy",
         retries=3,
