@@ -32,8 +32,12 @@ class UserController:
         )
     
     async def login(self, login_request: UserLoginDTO) -> LoginResponse:
+        user_login_dto, is_first_login = self.user_service.login(login_request)
         return LoginResponse(
-            **dict(self.user_service.login(login_request))
+            token=user_login_dto.token,
+            login_id=user_login_dto.login_id,
+            password=user_login_dto.password,
+            is_first_login=is_first_login
         )
     
     async def is_login_id_usable(self, login_id: str) -> bool:
@@ -59,8 +63,15 @@ class UserController:
         # recipe 정보 가져오기
         recipe_infos = self.recipe_service.get_recipes_by_recipes_id(top_k_recipes)
 
+        # logging.debug(recipe_infos.get_total_ingredients_set())
+
         # ingredient 정보 가져오기
-        price_infos = self.recipe_service.get_prices_by_ingredients_id(recipe_infos.get_total_ingredients_set())
+        price_infos = recipe_infos.get_total_ingredients_set()
+
+        # logging.debug("----------[user_controller]------------")
+        # logging.debug(recipe_infos)
+        # logging.debug(price_infos)
+        price_infos = self.recipe_service.get_prices_by_ingredients_id(price_infos)
 
         # 장바구니 추천
         recipes = recipe_infos.get_recipes()
@@ -76,7 +87,7 @@ class UserController:
         return recommended_basket
     
     def _basket_with_infos(self, recommended_basket: dict, recipe_infos: Recipes):
-        logging.debug('recommended_basket', recommended_basket)
+        # logging.debug('recommended_basket', recommended_basket)
         # logging.debug(recipe_infos)
 
         recipe_info_list = [recipe.as_basket_form() for recipe in recipe_infos.get_recipes() if recipe.get_id() in recommended_basket['recipe_list']]
@@ -154,7 +165,7 @@ async def favor_recipes(page_num: int=1) -> Response:
 @user_router.post('/api/users/{user_id}/foods')
 async def save_favor_recipes(user_id: str, request: UserFavorRecipesRequest) -> Response:
     await user_controller.save_favor_recipes(user_id, request)
-    return Response(status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_201_CREATED)
 
 @user_router.post('/api/users/{user_id}/recommendations')
 async def get_recommendation(user_id: str, price: int) -> JSONResponse:

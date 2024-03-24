@@ -5,10 +5,10 @@ from app.utils.pyobject_id import PyObjectId
 
 class User(BaseModel):
     id: PyObjectId = Field(alias='_id', default=None)
-    user_nickname: str
-    user_name: str
-    user_email: str
-    user_password: str
+    nickname: str
+    # user_name: str
+    email: str
+    password: str
     allergy: List[PyObjectId] = []
     recommend_history_by_model: List[PyObjectId] = []
     recommend_history_by_basket: List[PyObjectId] = []

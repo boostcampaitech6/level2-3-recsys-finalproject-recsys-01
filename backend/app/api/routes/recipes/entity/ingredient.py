@@ -7,6 +7,7 @@ class Ingredient(BaseModel):
     name: str
     price: float
     price_url: str
+    amount: dict
     
     model_config = ConfigDict(
         populate_by_name=True,
@@ -16,6 +17,7 @@ class Ingredient(BaseModel):
                 "id": "recipe_id",
                 "name": "김치",
                 "price": "5800",
+                "amount": { "value": 240, "unit": 'g' },
                 "price_url": "https://www.10000recipe.com/recipe/view.html?seq=6908832&targetList=reviewLists#reviewLists",
             }
         },
@@ -45,9 +47,9 @@ class Ingredient(BaseModel):
         return {
             'ingredient_id': self.id,
             'ingredient_name': self.name,
-            'ingredient_amount': 0,
-            'ingredient_unit': 'None',
+            'ingredient_amount': self.amount['value'],
+            'ingredient_unit': self.amount['unit'],
             'ingredient_price': self.price,
-            'img_link': 'None',
+            'img_link': 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg',
             'market_url': self.price_url,
         }
