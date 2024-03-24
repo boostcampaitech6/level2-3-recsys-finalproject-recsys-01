@@ -58,7 +58,8 @@ def display_my_recipe_container(my_recipe_list):
         for i, my_recipe in enumerate(my_recipe_list[:5]):
             with cols[i]:
                 with st.container(border=True):
-                    st.image(my_recipe["recipe_img_url"])
+                    # st.image(my_recipe["recipe_img_url"])
+                    st.markdown(f'<a href="{my_recipe["recipe_url"]}" target="_blank"><img src="{my_recipe["recipe_img_url"]}" alt="Your Image" width=90 height=90/></a>', unsafe_allow_html=True)
                     st.markdown(f"<p style='text-align: center;'>{my_recipe['recipe_name']}</p>", unsafe_allow_html=True)
 
 def display_recommended_container(recommended_list): 
@@ -78,7 +79,8 @@ def display_recommended_container(recommended_list):
         for i, recommended in enumerate(recommended_list[:5]):
             with cols[i]:
                 with st.container(border=True):
-                    st.image(recommended["recipe_img_url"])
+                    # st.image(recommended["recipe_img_url"])
+                    st.markdown(f'<a href="{recommended["recipe_url"]}" target="_blank"><img src="{recommended["recipe_img_url"]}" alt="Your Image" width=90 height=90/></a>', unsafe_allow_html=True)
                     st.markdown(f"<p style='text-align: center;'>{recommended['recipe_name']}</p>", unsafe_allow_html=True)
 
 def main_page_2():
