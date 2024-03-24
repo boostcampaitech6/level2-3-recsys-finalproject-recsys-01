@@ -1,80 +1,92 @@
+import math
 from typing import List
 
 import torch
 
-from recbole.config import Config
-from recbole.data import create_dataset, data_preparation
-from recbole.model.general_recommender import MultiDAE # BPR
-from recbole.trainer import Trainer
-from recbole.utils import init_logger, init_seed
+from recbole.quick_start import load_data_and_model
 from recbole.data.interaction import Interaction
 
-def inference(user_ids: List[str], modelname: str, config_file: str, model_file_path: str, k: int=20):
-    
-    # 설정 파일 로드
-    config = Config(model=modelname, dataset='recipe-dataset', config_file_list=[config_file])
+def prep_inference_data(user_id_and_feedbacks, dataset, config) -> Interaction:
 
-    # 데이터셋 생성
-    dataset = create_dataset(config)
+    item_id_list, item_length = [], []
+    for user_id_and_feedback in user_id_and_feedbacks:
 
-    # 데이터 분할
-    train_data, valid_data, test_data = data_preparation(config, dataset)
+        # 레시피토큰 -> id 로 변환
+        recipe_ids = [dataset.token2id(dataset.iid_field, item_token) for item_token in user_id_and_feedback['feedbacks']]
 
-    # 모델 초기화
-    if modelname == 'MultiDAE':
-        model = MultiDAE(config, train_data.dataset).to(config['device'])
-    else:
-        raise ValueError(f'{modelname} Not Found. Train First')
+        item_id_list.append(recipe_ids) 
+        item_length.append(len(recipe_ids))
 
-    # 모델 파라미터 로드
-    model.load_state_dict(torch.load(model_file_path)['state_dict'])
-
-    # 추론 준비
-    model.eval()
-
-    # 사용자 ID에 대한 텐서 생성
-    user_ids = [dataset.token2id(dataset.uid_field, user_id) for user_id in user_ids]
-    user_dict = {
-        dataset.uid_field: torch.tensor(user_ids, dtype=torch.int64).to(config['device'])
+    item_dict = {
+        'item_id_list': torch.tensor(item_id_list, dtype=torch.int64).to(config['device']),
+        'item_length': torch.tensor(item_length, dtype=torch.int64).to(config['device'])
     }
 
     # Interaction 객체 생성
-    interaction = Interaction(user_dict)
+    interaction = Interaction(item_dict)
 
-    # 모델을 사용하여 추천 생성
-    scores = model.full_sort_predict(interaction).view(-1, dataset.item_num)
-    probas = torch.sigmoid(scores)
+    return interaction 
 
-    # 실제 인터렉션이 있는 위치를 매우 낮은 값으로 마스킹
-    user_interactions = model.get_rating_matrix(interaction['user_id'])
-    masked_scores = probas.clone()
-    masked_scores[user_interactions >= 1] = -1e9
+def sasrec_inference(modelpath: str, user_id_and_feedbacks: list, k: int=20, batch_size: int=4096):
 
-    # 확률이 높은 아이템 20개 추출 
-    topk_proba, topk_item = torch.topk(masked_scores, k, dim=1)
+    num_users = len(user_id_and_feedbacks)
+    recommended_result = []
 
-    item_ids = [
-        dataset.id2token(dataset.iid_field, item_token).tolist()\
-            for item_token in topk_item.detach().cpu().numpy()]
-    item_proba = topk_proba.detach().cpu().numpy()
+    # 저장된 아티팩트 로드
+    config, model, dataset, train_data, valid_data, test_data = load_data_and_model(modelpath)
 
-    print(item_ids)
-    print(item_proba)
+    for i in range(math.ceil(num_users/batch_size)):
 
-    return {'item_ids': item_ids, 'item_proba': item_proba.tolist()}
+        # prep data
+        batch_data = user_id_and_feedbacks[i*batch_size: (i+1)*batch_size]
+        user_ids = [data['_id'] for data in batch_data]
+        inference_data = prep_inference_data(batch_data, dataset, config)
+
+        # prediction
+        scores = model.full_sort_predict(inference_data).view(num_users, -1)
+        probas = torch.sigmoid(scores)
+
+        # 확률이 높은 아이템 20개 추출 
+        topk_proba, topk_item = torch.topk(probas, k, dim=1)
+
+        # recipe id to token
+        recipe_tokens = [
+            dataset.id2token(dataset.iid_field, item_token).tolist()\
+                for item_token in topk_item.detach().cpu().numpy()]
+
+        for user, recommended_items in zip(user_ids, recipe_tokens):
+            recommended_result.append({
+                '_id': user,
+                'recommended_items': recommended_items
+            })
+
+    return recommended_result
 
 if __name__ == '__main__':
 
     # 설정 파일과 모델 저장 경로 설정
-    config_file_path = '/home/judy/train_model/recipe-dataset.yaml'  # 설정 파일 경로
-    model_file_path = '/home/judy/train_model/saved/MultiDAE-Mar-14-2024_23-15-20.pth'  # 모델 파일 경로
+    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/BERT4Rec-Mar-24-2024_00-51-09.pth'
 
-    recommended_items = inference(
-        user_ids=['76017883', '94541740'], 
-        modelname='MultiDAE', 
-        config_file=config_file_path, 
-        model_file_path=model_file_path, 
-        k=20)
+    from db_operations import fetch_user_history 
 
-    print(recommended_items['item_ids'])
-    print(recommended_items['item_proba'])
+    # 데이터 얻기
+    user_id_and_feedbacks = fetch_user_history()
+
+    recommended_items = sasrec_inference(
+        modelpath, 
+        user_id_and_feedbacks)
+
+    from bson import ObjectId
+    from pymongo import MongoClient
+    from db_config import db_host, db_port
+
+    # 추천 결과 확인하기
+    client = MongoClient(host=db_host, port=db_port)
+    db = client.dev
+
+    for recommended_item in recommended_items:
+        print(recommended_item['_id'])
+        for recipe in recommended_item['recommended_items']:
+            for r in db['recipes'].find({'recipe_sno': recipe}):
+                print(r['food_name'], end=' | ')
+        print()
