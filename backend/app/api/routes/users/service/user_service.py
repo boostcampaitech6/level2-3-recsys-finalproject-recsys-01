@@ -74,6 +74,7 @@ class UserService:
         return self._optimized_results(recipe_infos, price_infos, price)
     
     def save_basket(self, user_id, price, datetime, recommended_basket) -> None:
+        # 추천 결과 정보 저장
         self.basket_repository.save({
             'user_id': user_id,
             'price': price,
@@ -81,6 +82,9 @@ class UserService:
             'ingredients': recommended_basket['ingredient_list'],
             'recipes': recommended_basket['recipe_list'],
             'basket_price': 0})
+        
+        # 유저 recommend 정보 append
+        self.user_repository.update_recommended_basket(user_id, recommended_basket['recipe_list'])
 
     def _optimized_results(self, 
                            recipe_requirement_infos: dict,

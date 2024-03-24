@@ -33,6 +33,12 @@ class UserRepository:
         result = self.collection.update_one(query, update_value)
         return result.modified_count
     
+    def update_recommended_basket(self, login_id: str, recipe_list: list):
+        query = {'login_id': login_id}
+        update_value = {'$addToSet': {'recommend_history_by_basket': {'$each': recipe_list}}}
+        result = self.collection.update_one(query, update_value)
+        return result.modified_count
+    
 class SessionRepository:
     def __init__(self):
         self.collection = data_source.collection_with_name_as('sessions')
