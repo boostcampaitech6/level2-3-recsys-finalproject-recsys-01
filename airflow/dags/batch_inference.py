@@ -7,50 +7,30 @@ from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
-from recbole_inference import inference 
 from db_config import db_host, db_port
 
-def get_active_users(**context):
-    client = MongoClient(host=db_host, port=db_port)
-    db = client.dev
-    active_users = [user['login_id'] for user in db['users'].find()]
-    print(active_users)
+from db_operations import fetch_user_history, update_model_recommendations
+from recbole_inference import sasrec_inference 
 
-    user_ids = ['76017883', '94541740']
-    context["ti"].xcom_push(key='user_ids', value=user_ids)
+def fetch_and_push_user_history(**context):
+    user_id_and_feedbacks = fetch_user_history()
+    context["ti"].xcom_push(key='user_id_and_feedbacks', value=user_id_and_feedbacks)
 
 def batch_inference(**context):
-    # user_ids
-    user_ids = context["ti"].xcom_pull(key='user_ids')
+    user_id_and_feedbacks = context["ti"].xcom_pull(key='user_id_and_feedbacks')
 
     # 설정 파일과 모델 저장 경로 설정
-    config_file_path = '/home/judy/train_model/recipe-dataset.yaml'  # 설정 파일 경로
-    model_file_path = '/home/judy/train_model/saved/MultiDAE-Mar-14-2024_23-15-20.pth'  # 모델 파일 경로
+    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/BERT4Rec-Mar-24-2024_00-51-09.pth'
 
-    recommended_items = inference(
-        user_ids=user_ids,
-        modelname='MultiDAE', 
-        config_file=config_file_path, 
-        model_file_path=model_file_path, 
-        k=20)
+    recommended_results = sasrec_inference(
+        modelpath, 
+        user_id_and_feedbacks)
 
-    context["ti"].xcom_push(key='recommended_items', value=recommended_items)
+    context["ti"].xcom_push(key='recommended_results', value=recommended_results)
 
-def save_results(**context):
-    user_ids = context["ti"].xcom_pull(key='user_ids')
-    recommended_items = context["ti"].xcom_pull(key='recommended_items')
-
-    client = MongoClient(host=db_host, port=db_port)
-    db = client.dev
-    data = [{
-        'id': user_id, 
-        'recommended_item': recommended_item, 
-        'recommended_proba': recommended_proba, 
-        'date': dt.now()
-        } for user_id, recommended_item, recommended_proba in zip(user_ids, recommended_items['item_ids'], recommended_items['item_proba'])] 
-
-    db['model_recommendation_histories'].insert_many(data)
-    print('push data into db')
+def save_results(collection_name, **context):
+    recommended_results = context["ti"].xcom_pull(key='recommended_results')
+    update_model_recommendations(recommended_results, collection_name)
 
 with DAG(
         dag_id="batch_inference",
@@ -62,17 +42,17 @@ with DAG(
 
     # get active user 
     t1 = PythonOperator(
-        task_id="get_active_users", 
-        python_callable=get_active_users, 
+        task_id="fetch_and_push_user_history",
+        python_callable=fetch_and_push_user_history,
         depends_on_past=False, 
         owner="judy",
         retries=3,
         retry_delay=timedelta(minutes=5), 
     )
 
-    # inference
+    # hybrid inference
     t2 = PythonOperator(
-        task_id="batch_inference", 
+        task_id="batch_inference_by_hybrid", 
         python_callable=batch_inference, 
         depends_on_past=False, 
         owner="judy",
@@ -87,6 +67,9 @@ with DAG(
         depends_on_past=False, 
         owner="judy",
         retries=3,
+        op_kwargs={
+            'collection_name': 'model_recommendation_history_hybrid', 
+            'meta': {'model_version': '0.0.1'}},
         retry_delay=timedelta(minutes=5), 
     )
 
