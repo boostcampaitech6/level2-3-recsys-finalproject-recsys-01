@@ -80,13 +80,20 @@ class UserController:
         recommended_basket = self.user_service.recommended_basket(recipes, price_infos, price)
 
         # 추천 장바구니 결과 저장
-        self.user_service.save_basket(user_id, price, dt.now(), recommended_basket)
+        basket_price = sum([price for id, price in price_infos.items() if id in recommended_basket['ingredient_list']])
+        recommended_basket['basket_price'] = basket_price
+        self.user_service.save_basket(
+            user_id=user_id,
+            price=price,
+            datetime=dt.now(),
+            recommended_basket=recommended_basket,
+            )
 
-        recommended_basket = self._basket_with_infos(recommended_basket, recipe_infos)
+        recommended_basket = self._basket_info(recommended_basket, recipe_infos)
 
         return recommended_basket
     
-    def _basket_with_infos(self, recommended_basket: dict, recipe_infos: Recipes):
+    def _basket_info(self, recommended_basket: dict, recipe_infos: Recipes):
         # logging.debug('recommended_basket', recommended_basket)
         # logging.debug(recipe_infos)
 
@@ -97,12 +104,12 @@ class UserController:
         ingredient_info_list = [ingredient.as_basket_form() for ingredient in total_ingredients if ingredient.get_id() in recommended_basket['ingredient_list']]
         # logging.debug('Ingredient Basket Form', ingredient_info_list)
 
-        basket_with_infos = {
-            'basket_price': 0,
+        basket_info = {
+            'basket_price': recommended_basket['basket_price'],
             'ingredient_list': ingredient_info_list,
             'recipe_list': recipe_info_list,
         }
-        return basket_with_infos
+        return basket_info
 
 
 user_controller = UserController(

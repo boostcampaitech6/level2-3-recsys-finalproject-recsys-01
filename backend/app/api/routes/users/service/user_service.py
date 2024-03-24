@@ -73,7 +73,7 @@ class UserService:
         # 이진 정수 프로그래밍
         return self._optimized_results(recipe_infos, price_infos, price)
     
-    def save_basket(self, user_id, price, datetime, recommended_basket) -> None:
+    def save_basket(self, user_id, price, datetime, recommended_basket, basket_price: float = 0.) -> None:
         # 추천 결과 정보 저장
         self.basket_repository.save({
             'user_id': user_id,
@@ -81,7 +81,7 @@ class UserService:
             'datetime': datetime,
             'ingredients': recommended_basket['ingredient_list'],
             'recipes': recommended_basket['recipe_list'],
-            'basket_price': 0})
+            'basket_price': recommended_basket['basket_price']})
         
         # 유저 recommend 정보 append
         self.user_repository.update_recommended_basket(user_id, recommended_basket['recipe_list'])
