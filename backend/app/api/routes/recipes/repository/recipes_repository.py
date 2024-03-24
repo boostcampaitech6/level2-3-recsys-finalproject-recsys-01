@@ -62,6 +62,7 @@ class RecipesRepository:
                 'value': amount['value'],
                 'unit': amount['unit'],
             }
+            amount['img_url'] = price['img_url']
             ingredient_list.append(amount)
         
         # logging.debug('[RECIPE_REPOSITORY_RESULT]', ingredient_list)

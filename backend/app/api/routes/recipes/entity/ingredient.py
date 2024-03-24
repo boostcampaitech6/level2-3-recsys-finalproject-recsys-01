@@ -8,6 +8,7 @@ class Ingredient(BaseModel):
     price: float
     price_url: str
     amount: dict
+    img_url: str
     
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,6 +51,6 @@ class Ingredient(BaseModel):
             'ingredient_amount': self.amount['value'],
             'ingredient_unit': self.amount['unit'],
             'ingredient_price': self.price,
-            'img_link': 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg',
+            'img_link': self.img_url if self.img_url else 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg',
             'market_url': self.price_url,
         }

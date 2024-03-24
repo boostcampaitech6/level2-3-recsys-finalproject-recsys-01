@@ -90,9 +90,9 @@ class UserService:
         # 가격 상한
         MAX_PRICE = price
 
-        logging.debug("-----------[OPTIMIZING]------------")
-        logging.debug(recipe_requirement_infos)
-        logging.debug(price_infos)
+        # logging.debug("-----------[OPTIMIZING]------------")
+        # logging.debug(recipe_requirement_infos)
+        # logging.debug(price_infos)
 
         # 문제 인스턴스 생성
         prob = pulp.LpProblem("MaximizeNumberOfDishes", pulp.LpMaximize)
