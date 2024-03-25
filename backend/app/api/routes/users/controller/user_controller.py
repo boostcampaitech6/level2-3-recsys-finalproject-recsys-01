@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Query, Response, status
+import requests
+import json
+import os
+from fastapi import APIRouter, Query, Response, status, HTTPException
 from typing import Optional
 from datetime import datetime as dt
 
@@ -32,8 +35,12 @@ class UserController:
         )
     
     async def login(self, login_request: UserLoginDTO) -> LoginResponse:
+        user_login_dto, is_first_login = self.user_service.login(login_request)
         return LoginResponse(
-            **dict(self.user_service.login(login_request))
+            token=user_login_dto.token,
+            login_id=user_login_dto.login_id,
+            password=user_login_dto.password,
+            is_first_login=is_first_login
         )
     
     async def is_login_id_usable(self, login_id: str) -> bool:
@@ -50,17 +57,55 @@ class UserController:
         }
     
     async def save_favor_recipes(self, login_id: str, request: UserFavorRecipesRequest) -> None:
-        return self.user_service.save_favor_recipes(login_id, request)
+        # 선호 레시피 목록 저장
+        user_id = self.user_service.save_favor_recipes(login_id, request)
+
+        host = 'http://10.0.7.8:8000'
+        dag_id = 'realtime_serving'
+
+        username = os.getenv("AIRFLOW_USERNAME")
+        password = os.getenv("AIRFLOW_PASSWORD")
+
+        if username is None or password is None:
+            raise ValueError("AIRFLOW 유저 정보가 누락되었습니다.")
+
+        header = {
+            'Content-type': 'application/json',
+            'Accept': 'application/json',
+        }
+
+        request_body = json.dumps({
+            "conf": { "user_id": user_id },
+        })
+
+        response = requests.post(url=f"{host}/api/v1/dags/{dag_id}/dagRuns", headers=header, data=request_body, auth=(username, password))
+
+        if response.status_code != 200:
+            # 오류 시 선호 레시피 목록 롤백
+            request.recipes = []
+            self.user_service.save_favor_recipes(login_id, request)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="잠시 후 다시 시도해주세요.")
+
     
     async def recommended_basket(self, user_id: str, price: int):
         # top k recipes id 가져옴
         top_k_recipes = self.user_service.top_k_recipes(user_id, price)
 
+        if top_k_recipes is None or len(top_k_recipes) <= 0:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요.")
+
         # recipe 정보 가져오기
         recipe_infos = self.recipe_service.get_recipes_by_recipes_id(top_k_recipes)
 
+        # logging.debug(recipe_infos.get_total_ingredients_set())
+
         # ingredient 정보 가져오기
-        price_infos = self.recipe_service.get_prices_by_ingredients_id(recipe_infos.get_total_ingredients_set())
+        price_infos = recipe_infos.get_total_ingredients_set()
+
+        # logging.debug("----------[user_controller]------------")
+        # logging.debug(recipe_infos)
+        # logging.debug(price_infos)
+        price_infos = self.recipe_service.get_prices_by_ingredients_id(price_infos)
 
         # 장바구니 추천
         recipes = recipe_infos.get_recipes()
@@ -69,14 +114,21 @@ class UserController:
         recommended_basket = self.user_service.recommended_basket(recipes, price_infos, price)
 
         # 추천 장바구니 결과 저장
-        self.user_service.save_basket(user_id, price, dt.now(), recommended_basket)
+        basket_price = sum([price for id, price in price_infos.items() if id in recommended_basket['ingredient_list']])
+        recommended_basket['basket_price'] = basket_price
+        self.user_service.save_basket(
+            user_id=user_id,
+            price=price,
+            datetime=dt.now(),
+            recommended_basket=recommended_basket,
+            )
 
-        recommended_basket = self._basket_with_infos(recommended_basket, recipe_infos)
+        recommended_basket = self._basket_info(recommended_basket, recipe_infos)
 
         return recommended_basket
     
-    def _basket_with_infos(self, recommended_basket: dict, recipe_infos: Recipes):
-        logging.debug('recommended_basket', recommended_basket)
+    def _basket_info(self, recommended_basket: dict, recipe_infos: Recipes):
+        # logging.debug('recommended_basket', recommended_basket)
         # logging.debug(recipe_infos)
 
         recipe_info_list = [recipe.as_basket_form() for recipe in recipe_infos.get_recipes() if recipe.get_id() in recommended_basket['recipe_list']]
@@ -86,12 +138,12 @@ class UserController:
         ingredient_info_list = [ingredient.as_basket_form() for ingredient in total_ingredients if ingredient.get_id() in recommended_basket['ingredient_list']]
         # logging.debug('Ingredient Basket Form', ingredient_info_list)
 
-        basket_with_infos = {
-            'basket_price': 0,
+        basket_info = {
+            'basket_price': recommended_basket['basket_price'],
             'ingredient_list': ingredient_info_list,
             'recipe_list': recipe_info_list,
         }
-        return basket_with_infos
+        return basket_info
 
 
 user_controller = UserController(
@@ -154,7 +206,7 @@ async def favor_recipes(page_num: int=1) -> Response:
 @user_router.post('/api/users/{user_id}/foods')
 async def save_favor_recipes(user_id: str, request: UserFavorRecipesRequest) -> Response:
     await user_controller.save_favor_recipes(user_id, request)
-    return Response(status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_201_CREATED)
 
 @user_router.post('/api/users/{user_id}/recommendations')
 async def get_recommendation(user_id: str, price: int) -> JSONResponse:

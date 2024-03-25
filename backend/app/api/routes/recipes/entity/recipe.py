@@ -8,7 +8,7 @@ class Recipe(BaseModel):
     food_name: str
     recipe_name: str
     ingredients: List[PyObjectId] = []
-    time_taken: int
+    time_taken: str
     difficulty: str
     recipe_url: str
     portion: str
