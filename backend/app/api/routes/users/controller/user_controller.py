@@ -91,6 +91,9 @@ class UserController:
         # top k recipes id 가져옴
         top_k_recipes = self.user_service.top_k_recipes(user_id, price)
 
+        if top_k_recipes is None or len(top_k_recipes) <= 0:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="처리가 지연되고 있습니다. 잠시 후 다시 시도해주세요.")
+
         # recipe 정보 가져오기
         recipe_infos = self.recipe_service.get_recipes_by_recipes_id(top_k_recipes)
 

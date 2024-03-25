@@ -80,7 +80,7 @@ class RecommendationRepository:
 
     def find_by_user_id(self, user_id: str) -> list:
         result = self.collection.find_one({'id': user_id})
-        return result['recommended_item']
+        return result['recommended_item'] if result is not None else []
 
 class BasketRepository:
     def __init__(self):
