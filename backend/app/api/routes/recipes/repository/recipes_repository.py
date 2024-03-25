@@ -40,14 +40,15 @@ class RecipesRepository:
                        .find({"_id": { "$in": list(map(ObjectId, ingredients_id))} })
                        .sort({'ingredient_id': 1}))
         ingredient_ids = [amount['ingredient_id'] for amount in amounts]
-        ingredients = list(self.ingredients_collection
-                           .find({"_id": {"$in": list(map(ObjectId, ingredient_ids))}})
-                           .sort({'_id': 1}))
+        # ingredients = list(self.ingredients_collection
+        #                    .find({"_id": {"$in": list(map(ObjectId, ingredient_ids))}})
+        #                    .sort({'_id': 1}))
+        ingredients = [self.ingredients_collection.find_one({'_id': id}) for id in ingredient_ids]
         prices = list(next(self.prices_collection
                   .find({"ingredient_id": ingredient_id}).sort({"date": -1}).limit(1)) for ingredient_id in ingredient_ids)
         # prices = list(self.prices_collection.find({"ingredient_id": {"$in": list(map(ObjectId, ingredient_ids))}}))
 
-        # logging.debug(len(amounts), len(ingredients), len(prices))
+        logging.debug('[LEN]', len(amounts), len(ingredients), len(prices))
         ingredient_list = list()
         for amount, ingredient, price in zip(amounts, ingredients, prices):
             # id: PyObjectId = Field(alias='_id', default=None)
@@ -56,13 +57,13 @@ class RecipesRepository:
             # price_url: str
             # amount: dict
             amount['name'] = ingredient['name']
-            amount['price'] = price['price']
-            amount['price_url'] = price['price_url']
+            amount['price'] = price['price'] if price['price'] else 0
+            amount['price_url'] = price['price_url'] if price['price_url'] else ''
             amount['amount'] = {
                 'value': amount['value'],
                 'unit': amount['unit'],
             }
-            amount['img_url'] = price['img_url']
+            amount['img_url'] = price['img_url'] if price['img_url'] else ''
             ingredient_list.append(amount)
         
         # logging.debug('[RECIPE_REPOSITORY_RESULT]', ingredient_list)
