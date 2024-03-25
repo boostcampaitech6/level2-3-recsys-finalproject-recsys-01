@@ -24,7 +24,7 @@ class UserRepository:
     
     def find_one(self, query: dict) -> UserSignupDTO:
         result = self.collection.find_one(query)
-        logging.debug(result)
+        # logging.debug(result)
         return result
     
     def update_food(self, login_id: str, foods: list) -> str:
@@ -64,7 +64,7 @@ class FoodRepository:
         # logging.debug(results)
         results = list(results)
         total_size = len(results)
-        logging.debug('total_size', total_size)
+        # logging.debug('total_size', total_size)
         lst = []
         for i, result in enumerate(results):
             if i == page_size: break
@@ -79,8 +79,9 @@ class RecommendationRepository:
         self.collection = data_source.collection_with_name_as('model_recommendation_histories')
 
     def find_by_user_id(self, user_id: str) -> list:
-        result = self.collection.find_one({'id': user_id})
-        return result['recommended_item'] if result is not None else []
+        result = self.collection.find({'id': user_id}).sort({'datetime':-1}).limit(1)
+        result = next(result, None)
+        return result['recommended_item'] if (result and 'recommended_item' in result) else []
 
 class BasketRepository:
     def __init__(self):
