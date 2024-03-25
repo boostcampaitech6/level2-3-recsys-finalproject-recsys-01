@@ -51,7 +51,7 @@ class PriceCrawler:
         else:
             # 검색 결과 0개인 경우
 
-            min_price_document = {'_id' : self.id,
+            min_price_document = {'ingredient_id' : self.id,
                         'product_name': None,
                         'date': None,
                         'price_url' : None,
@@ -74,7 +74,7 @@ class PriceCrawler:
             price_num = price2num(a_tag.find_element(By.CLASS_NAME, 'price').text)
             product_name = a_tag.find_element(By.CLASS_NAME, 'title').text
 
-            new_document = {'_id' : self.id,
+            new_document = {'ingredient_id' : self.id,
                         'product_name': product_name,
                         'date': iso_format_time(datetime.now()),
                         'price_url' : item_url,
@@ -114,7 +114,7 @@ def main(args):
     for document in tqdm(cursor):
         # crawled doc 만들기
         if document['name'] == '':
-            crawled_document = {'_id' : document['_id'],
+            crawled_document = {'ingredient_id' : document['_id'],
                         'product_name': None,
                         'date': None,
                         'price_url' : None,
@@ -129,7 +129,7 @@ def main(args):
                 log_exception(args.log_path, str(document['_id']))
 
                 crawled_document = {
-                    '_id' : document['_id'],
+                    'ingredient_id' : document['_id'],
                     'product_name': None,
                     'date': None,
                     'price_url' : None,
@@ -143,7 +143,7 @@ def main(args):
             new_collection.insert_one(crawled_document)
         except pymongo.errors.DuplicateKeyError:
             try:
-                new_collection.update_one({'_id': document['_id']},  {"$set": crawled_document}, upsert=True)
+                new_collection.update_one({'ingredient_id': document['_id']},  {"$set": crawled_document}, upsert=True)
             except:
                 log_exception(args.log_path, str(document['_id']))
                 pass
