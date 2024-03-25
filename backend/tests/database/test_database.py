@@ -1,6 +1,8 @@
 import pytest
+import sys, os
 
-from ...app.database.data_source import DataSource, env_file_of
+# sys.path.append(os.path)
+from app.database.data_source import DataSource, env_file_of
 from ..assert_not_raises import not_raises
 
 @pytest.mark.parametrize("input, output", [

@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, APIRouter
-from api.routes.users.controller.user_controller import user_router
-from api.routes.recipes.controller.recipes_controller import recipes_router
+from app.api.routes.users.controller.user_controller import user_router
+from app.api.routes.recipes.controller.recipes_controller import recipes_router
 
 def new_app() -> FastAPI:
     return FastAPI()

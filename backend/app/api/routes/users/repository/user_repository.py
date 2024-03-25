@@ -1,5 +1,5 @@
 from datetime import datetime
-from database.data_source import data_source
+from app.database.data_source import data_source
 from ..dto.user_dto import UserSignupDTO, UserLoginDTO
 import logging
 import pymongo
@@ -73,11 +73,10 @@ class RecommendationRepository:
     def find_by_login_id(self, login_id: str) -> list:
         result = self.collection.find_one({'id': login_id})
         return result['recommended_item']
-    
+
 class BasketRepository:
     def __init__(self):
         self.collection = data_source.collection_with_name_as('baskets')
 
     def save(self, recommendation):
         self.collection.insert_one(recommendation)
-    

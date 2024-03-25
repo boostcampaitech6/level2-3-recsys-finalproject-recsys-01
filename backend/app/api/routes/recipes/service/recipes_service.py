@@ -1,4 +1,5 @@
 from typing import List
+
 from ..repository.recipes_repository import RecipesRepository
 from ..entity.recipes import Recipes
 from ..entity.ingredients import Ingredients
@@ -8,7 +9,6 @@ from ..entity.user import User
 class RecipesService:
     def __init__(self, recipes_repository: RecipesRepository = None):
         self.recipes_repository = RecipesRepository()
-        
         
     def get_user_by_user_id(self, user_id: str) -> User:
         user = self.recipes_repository.select_user_by_user_id(user_id)
@@ -27,8 +27,7 @@ class RecipesService:
 
     def get_recipes_by_recipes_id(self, recipes_id: List[str]) -> Recipes: 
         # 레시피 리스트 조회
-        recipes = self.recipes_repository.select_recipes_by_recipes_id(recipes_id)
-        return recipes
+        return self.recipes_repository.select_recipes_by_recipes_id(recipes_id)
 
 
     def get_ingredients_list_by_recipes(self, recipes: Recipes) -> List[Ingredients]:
@@ -52,4 +51,10 @@ class RecipesService:
         user_cooked_recipes_id.remove(recipes_id)
         user_recommended_recipes_id.append(recipes_id)
         return self.recipes_repository.update_cooked_recipes(user_id, user_cooked_recipes_id, user_recommended_recipes_id)
-        
+    
+    def get_prices_by_ingredients_id(self, ingredients_id: List[str]):
+        ingredients = self.recipes_repository.select_ingredients_by_ingredients_id(ingredients_id).get_ingredients()
+        return {ingredient.get_id(): ingredient.get_price() for ingredient in ingredients}
+    
+    def get_ingredients_by_ingredients_id(self, ingredients_id: List[str]):
+        return self.recipes_repository.select_ingredients_by_ingredients_id(ingredients_id).get_ingredients()

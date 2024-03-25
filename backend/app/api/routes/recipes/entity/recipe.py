@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from utils.pyobject_id import PyObjectId
+from app.utils.pyobject_id import PyObjectId
 from typing import List
 
 
@@ -7,7 +7,7 @@ class Recipe(BaseModel):
     id: PyObjectId = Field(alias='_id', default=None)
     food_name: str
     recipe_name: str
-    ingredient: List[PyObjectId] = []
+    ingredients: List[PyObjectId] = []
     time_taken: int
     difficulty: str
     recipe_url: str
@@ -49,4 +49,27 @@ class Recipe(BaseModel):
     
     
     def get_ingredients(self):
-        return self.ingredient
+        return self.ingredients
+    
+    
+    def as_basket_form(self):
+        '''{
+			"recipe_id": 1,
+			"recipe_name": "어묵 김말이",
+			"ingredient": [
+				{"ingredient_id": "1",
+				"ingredient_name": "어묵"},
+				{"ingredient_id": "2",
+				"ingredient_name": "김말이"}
+			],
+			"recipe_img_url": "https://recipe1.ezmember.co.kr/cache/recipe/2015/05/18/1fb83f8578488ba482ad400e3b62df49.jpg",
+			"recipe_url": "https://www.10000recipe.com/recipe/128671"
+		}
+        '''
+        return {
+            'recipe_id': self.id,
+            'recipe_name': self.recipe_name,
+            'ingredient': self.ingredients,
+            'recipe_img_url': self.recipe_img_url,
+            'recipe_url': self.recipe_url,
+        }
