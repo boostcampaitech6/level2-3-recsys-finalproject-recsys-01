@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from bson import ObjectId
 from app.database.data_source import data_source
 from ..dto.user_dto import UserSignupDTO, UserLoginDTO
 import logging
@@ -76,12 +78,13 @@ class FoodRepository:
     
 class RecommendationRepository:
     def __init__(self):
-        self.collection = data_source.collection_with_name_as('model_recommendation_histories')
+        self.collection = data_source.collection_with_name_as('model_recommendation_history_total')
 
     def find_by_user_id(self, user_id: str) -> list:
-        result = self.collection.find({'id': user_id}).sort({'datetime':-1}).limit(1)
+        # logging.debug(user_id)
+        result = self.collection.find({'user_id': ObjectId(user_id)}).sort({'datetime':-1}).limit(1)
         result = next(result, None)
-        return result['recommended_item'] if (result and 'recommended_item' in result) else []
+        return list(map(str, result['recommended_recipes'] if (result and 'recommended_recipes' in result) else []))
 
 class BasketRepository:
     def __init__(self):
