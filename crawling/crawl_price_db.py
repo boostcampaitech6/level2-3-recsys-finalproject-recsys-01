@@ -1,7 +1,6 @@
 import pandas as pd
 import pymongo
 from pymongo import MongoClient
-import pprint
 import argparse
 from datetime import datetime
 import pandas as pd
@@ -9,8 +8,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-import json
-import time
 import os
 import re
 from tqdm import tqdm
@@ -92,12 +89,10 @@ class PriceCrawler:
         return min_price_document
 
 def main(args):
-    # MongoDB 연결 설정
-    # client = MongoClient('mongodb://localhost:27017/')
-    
+    print('>>>> Test ?: ', args.test)
     create_upper_folder(args.log_path)
     
-    client = MongoClient(args.mongo_client)
+    client = MongoClient(args.mongo_client) # MongoDB 연결 설정
     db = client['dev']  # 데이터베이스 선택
     collection = db['ingredients']  # 컬렉션 선택
     new_collection = db['prices']
@@ -110,10 +105,32 @@ def main(args):
     options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome(service=service, options=options)
     
-    
     cursor = collection.find()
 
+    if args.test:
+        # crawled doc 만들기
+        for document in tqdm(cursor):
+            if document['name'] == '':
+                crawled_document = {'_id' : document['_id'],
+                            'product_name': None,
+                            'date': None,
+                            'price_url' : None,
+                            'img_url' : None}
+            else:
+                try:
+                    crawler = PriceCrawler(id = document['_id'], query=document['name'])
+                    crawler.launch_crawler(driver)
+                    crawled_document = crawler.crawl_price()
+                except Exception as e:
+                    print(e)
+                    crawled_document = {'_id' : document['_id'],
+                            'product_name': None,
+                            'date': None,
+                            'price_url' : None,
+                            'img_url' : None}
+                    pass
     
+        
     for document in tqdm(cursor):
         
         # crawled doc 만들기
@@ -148,7 +165,6 @@ def main(args):
                 log_exception(args.log_path, str(document['_id']))
                 pass
         except Exception as e:
-            # breakpoint()
             log_exception(args.log_path, str(document['_id']))
             pass
 
@@ -156,9 +172,11 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="parser")
     arg = parser.add_argument
-
     arg("--mongo_client", type=str, default="mongodb://10.0.7.6:27017/")
     arg("--log_path", type=str, default = "log/price_db_error.txt")
+    arg("--test", type=bool, default = False)
     
     args = parser.parse_args()
     main(args)
+    
+    
