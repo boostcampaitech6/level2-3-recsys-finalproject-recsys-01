@@ -9,3 +9,5 @@ class Recipes(BaseModel):
     def get_recipes(self):
         return self.recipes
         
+    def get_total_ingredients_set(self):
+        return set.union(*(set(recipe.get_ingredients()) for recipe in self.recipes))
