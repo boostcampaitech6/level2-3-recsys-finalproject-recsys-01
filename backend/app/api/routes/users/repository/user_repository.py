@@ -27,11 +27,13 @@ class UserRepository:
         logging.debug(result)
         return result
     
-    def update_food(self, login_id: str, foods: list) -> int:
+    def update_food(self, login_id: str, foods: list) -> str:
         query = {'login_id': login_id}
         update_value = {'$set': {'initial_feedback_history': foods}}
-        result = self.collection.update_one(query, update_value)
-        return result.modified_count
+        self.collection.update_one(query, update_value)
+
+        user = self.collection.find_one(query)
+        return str(user['_id'])
     
     def update_recommended_basket(self, login_id: str, recipe_list: list):
         query = {'login_id': login_id}
@@ -76,8 +78,8 @@ class RecommendationRepository:
     def __init__(self):
         self.collection = data_source.collection_with_name_as('model_recommendation_histories')
 
-    def find_by_login_id(self, login_id: str) -> list:
-        result = self.collection.find_one({'id': login_id})
+    def find_by_user_id(self, user_id: str) -> list:
+        result = self.collection.find_one({'id': user_id})
         return result['recommended_item']
 
 class BasketRepository:

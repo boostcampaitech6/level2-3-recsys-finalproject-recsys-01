@@ -59,12 +59,13 @@ class UserService:
     def favor_recipes(self, page_num: int) -> list:
         return self.food_repository.find_foods(page_num)
     
-    def save_favor_recipes(self, login_id: str, request: UserFavorRecipesRequest) -> None:
-        self.user_repository.update_food(login_id, request.recipes)
+    def save_favor_recipes(self, login_id: str, request: UserFavorRecipesRequest) -> str:
+        return self.user_repository.update_food(login_id, request.recipes)
 
     def top_k_recipes(self, login_id: str, price: int) -> list:
+        user = self.user_repository.find_one({"login_id": login_id})
         # user에 inference된 recipes
-        return self.recommendation_repository.find_by_login_id(login_id)
+        return self.recommendation_repository.find_by_user_id(user['_id'])
     
     def recommended_basket(self, recipe_infos: dict, price_infos: dict, price: int) -> dict:
         # 입력값 파싱

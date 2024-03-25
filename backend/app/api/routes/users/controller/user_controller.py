@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Query, Response, status
+import requests
+import json
+import os
+from fastapi import APIRouter, Query, Response, status, HTTPException
 from typing import Optional
 from datetime import datetime as dt
 
@@ -54,7 +57,35 @@ class UserController:
         }
     
     async def save_favor_recipes(self, login_id: str, request: UserFavorRecipesRequest) -> None:
-        return self.user_service.save_favor_recipes(login_id, request)
+        # 선호 레시피 목록 저장
+        user_id = self.user_service.save_favor_recipes(login_id, request)
+
+        host = 'http://10.0.7.8:8000'
+        dag_id = 'realtime_serving'
+
+        username = os.getenv("AIRFLOW_USERNAME")
+        password = os.getenv("AIRFLOW_PASSWORD")
+
+        if username is None or password is None:
+            raise ValueError("AIRFLOW 유저 정보가 누락되었습니다.")
+
+        header = {
+            'Content-type': 'application/json',
+            'Accept': 'application/json',
+        }
+
+        request_body = json.dumps({
+            "conf": { "user_id": user_id },
+        })
+
+        response = requests.post(url=f"{host}/api/v1/dags/{dag_id}/dagRuns", headers=header, data=request_body, auth=(username, password))
+
+        if response.status_code != 200:
+            # 오류 시 선호 레시피 목록 롤백
+            request.recipes = []
+            self.user_service.save_favor_recipes(login_id, request)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="잠시 후 다시 시도해주세요.")
+
     
     async def recommended_basket(self, user_id: str, price: int):
         # top k recipes id 가져옴
