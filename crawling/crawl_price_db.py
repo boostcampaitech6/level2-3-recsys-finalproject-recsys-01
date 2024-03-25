@@ -1,15 +1,13 @@
 import os, re, argparse
 from datetime import datetime
-
+from tqdm import tqdm
+import pandas as pd
 import pymongo
 from pymongo import MongoClient
-
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-
-from tqdm import tqdm
 
 def log_exception(fname, log):
     with open(fname, 'a+') as log_file:
@@ -52,7 +50,8 @@ class PriceCrawler:
             divs = elem.find_elements(By.XPATH, "./div")
         else:
             # 검색 결과 0개인 경우
-            min_price_document = {'ingredient_id' : self.id,
+
+            min_price_document = {'_id' : self.id,
                         'product_name': None,
                         'date': None,
                         'price_url' : None,
@@ -74,8 +73,8 @@ class PriceCrawler:
             
             price_num = price2num(a_tag.find_element(By.CLASS_NAME, 'price').text)
             product_name = a_tag.find_element(By.CLASS_NAME, 'title').text
-                
-            new_document = {'ingredient_id' : self.id,
+
+            new_document = {'_id' : self.id,
                         'product_name': product_name,
                         'date': iso_format_time(datetime.now()),
                         'price_url' : item_url,
@@ -90,18 +89,15 @@ class PriceCrawler:
         return min_price_document
 
 def main(args):
-    # MongoDB 연결 설정
-    # client = MongoClient('mongodb://localhost:27017/')
-    
+
+    print('>>>> Test ?: ', args.test)
     create_upper_folder(args.log_path)
-    
-    client = MongoClient(args.mongo_client)
+    client = MongoClient(args.mongo_client) # MongoDB 연결 설정
     db = client['dev']  # 데이터베이스 선택
     collection = db['ingredients']  # 컬렉션 선택
     new_collection = db['prices']
     
     service = ChromeService(ChromeDriverManager().install())
-
     user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     
     options = webdriver.ChromeOptions()
@@ -114,19 +110,16 @@ def main(args):
     skip_count = args.skip_count
 
     cursor = collection.find().sort({'name':1}).skip(skip_count).limit(5000)
-    
-    for document in tqdm(list(cursor)):
-        
+
+    for document in tqdm(cursor):
         # crawled doc 만들기
         if document['name'] == '':
-            crawled_document = {
-                'ingredient_id' : document['_id'],
-                'product_name': None,
-                'date': None,
-                'price_url' : None,
-                'img_url' : None,
-                'price': None
-            }
+            crawled_document = {'_id' : document['_id'],
+                        'product_name': None,
+                        'date': None,
+                        'price_url' : None,
+                        'img_url' : None,
+                        'price' : None}
         else:
             try:
                 crawler = PriceCrawler(id = document['_id'], query=document['name'])
@@ -134,9 +127,9 @@ def main(args):
                 crawled_document = crawler.crawl_price()
             except Exception as e:
                 log_exception(args.log_path, str(document['_id']))
-                
+
                 crawled_document = {
-                    'ingredient_id' : document['_id'],
+                    '_id' : document['_id'],
                     'product_name': None,
                     'date': None,
                     'price_url' : None,
@@ -157,7 +150,6 @@ def main(args):
         except KeyboardInterrupt:
             break
         except Exception as e:
-            # breakpoint()
             log_exception(args.log_path, str(document['_id']))
             pass
 
@@ -165,10 +157,11 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="parser")
     arg = parser.add_argument
-
+    
     arg("--mongo_client", type=str, default="mongodb://10.0.7.6:27017/")
     arg("--log_path", type=str, default = "log/price_db_error.txt")
     arg("--skip_count", type=int, default=0)
+    arg("--test", type=bool, default = False)
     
     args = parser.parse_args()
     main(args)
