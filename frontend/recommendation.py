@@ -23,8 +23,9 @@ def recommendation_page():
     container = st.container(border=True)
 
     with container:
-        st.markdown("<h4 style='text-align: center;'>이번 주 장바구니 만들기</h4>", unsafe_allow_html=True)
-        st.markdown("<div style='text-align: center;'>AI 를 이용하여 당신의 입맛에 맞는 레시피와 필요한 식재료를 추천해줍니다.</div>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align: center;'>이번주 장바구니 만들기</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center;'>정해진 예산 안에서, 입맛에 맞는 요리를 만들고 싶지 않나요?</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align: center;'>인공지능이 당신의 음식 취향을 정밀 분석하여, 당신만을 위한 레시피와 식재료를 추천해줍니다.</div>", unsafe_allow_html=True)
         st.markdown("<div style='text-align: center;'>예산을 정해주세요.</div>", unsafe_allow_html=True)
 
         cols = st.columns([1,5,1])
@@ -48,7 +49,7 @@ def recommendation_page():
             st.write("예산: ", st.session_state.price, '원')
 
         if 'recommendation_result' in st.session_state:
-            cols = st.columns([3,2,3,3])
+            cols = st.columns([3,2.2,3,3])
             with cols[1]:
                 button1 = st.button("이전 추천보기", on_click=set_result_page_2)
             with cols[2]:

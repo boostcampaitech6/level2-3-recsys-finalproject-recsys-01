@@ -1,5 +1,3 @@
-# streamlit_app.py
-
 import hmac
 import streamlit as st
 import requests

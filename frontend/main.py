@@ -14,8 +14,8 @@ def welcome_container():
                     }
                     """,)
     with container3_1:
-        st.markdown("<h4 style='text-align: center;'>나만의 식량 바구니에 \n 오신 것을 환영합니다!</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>자신의 입맞에 맞는 레시피를 저장하고 \n 이번주에 구매할 식량 바구니를 추천받아보세요</p>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align: center;'>나만의 장바구니에 \n 오신 것을 환영합니다!</h4>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>자신의 입맛에 맞는 레시피를 저장하고 \n 이번주에 구매할 장바구니를 추천받아보세요</p>", unsafe_allow_html=True)
         
         cols = st.columns([4,2,2,3])
         with cols[1]:
@@ -28,7 +28,7 @@ def howto_container():
 
     with container3_2:
         st.markdown("<h4 style='text-align: center;'>사용 방법</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>회원 가입을 했을 때 어떤 기능을 쓸 수 있는지 살펴보는 페이지</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center;'>회원가입을 했을 때 어떤 기능을 쓸 수 있는지 살펴보는 페이지</p>", unsafe_allow_html=True)
         left_co, cent_co,last_co = st.columns((1, 8, 1))
         with cent_co:
             st.image('img/howto.png')
