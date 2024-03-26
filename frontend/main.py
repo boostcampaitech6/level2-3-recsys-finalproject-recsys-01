@@ -27,8 +27,8 @@ def howto_container():
     container3_2 = st.container(border = True)
 
     with container3_2:
-        st.markdown("<h4 style='text-align: center;'>사용 방법</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center;'>회원가입을 했을 때 어떤 기능을 쓸 수 있는지 살펴보는 페이지</p>", unsafe_allow_html=True)
+        st.markdown("<h5 style='text-align: center;'>나만의 장바구니에서는 아래의 기능들을 사용할 수 있어요!</h5>", unsafe_allow_html=True)
+        # st.markdown("<p style='text-align: center;'>회원가입을 했을 때 어떤 기능을 쓸 수 있는지 살펴보는 페이지</p>", unsafe_allow_html=True)
         left_co, cent_co,last_co = st.columns((1, 8, 1))
         with cent_co:
             st.image('img/howto.png')
