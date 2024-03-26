@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from bson import ObjectId
 from app.database.data_source import data_source
 from ..dto.user_dto import UserSignupDTO, UserLoginDTO
 import logging
@@ -24,12 +26,20 @@ class UserRepository:
     
     def find_one(self, query: dict) -> UserSignupDTO:
         result = self.collection.find_one(query)
-        logging.debug(result)
+        # logging.debug(result)
         return result
     
-    def update_food(self, login_id: str, foods: list) -> int:
+    def update_food(self, login_id: str, foods: list) -> str:
         query = {'login_id': login_id}
         update_value = {'$set': {'initial_feedback_history': foods}}
+        self.collection.update_one(query, update_value)
+
+        user = self.collection.find_one(query)
+        return str(user['_id'])
+    
+    def update_recommended_basket(self, login_id: str, recipe_list: list):
+        query = {'login_id': login_id}
+        update_value = {'$addToSet': {'recommend_history_by_basket': {'$each': recipe_list}}}
         result = self.collection.update_one(query, update_value)
         return result.modified_count
     
@@ -56,7 +66,7 @@ class FoodRepository:
         # logging.debug(results)
         results = list(results)
         total_size = len(results)
-        logging.debug('total_size', total_size)
+        # logging.debug('total_size', total_size)
         lst = []
         for i, result in enumerate(results):
             if i == page_size: break
@@ -68,11 +78,13 @@ class FoodRepository:
     
 class RecommendationRepository:
     def __init__(self):
-        self.collection = data_source.collection_with_name_as('model_recommendation_histories')
+        self.collection = data_source.collection_with_name_as('model_recommendation_history_total')
 
-    def find_by_login_id(self, login_id: str) -> list:
-        result = self.collection.find_one({'id': login_id})
-        return result['recommended_item']
+    def find_by_user_id(self, user_id: str) -> list:
+        # logging.debug(user_id)
+        result = self.collection.find({'user_id': ObjectId(user_id)}).sort({'datetime':-1}).limit(1)
+        result = next(result, None)
+        return list(map(str, result['recommended_recipes'] if (result and 'recommended_recipes' in result) else []))
 
 class BasketRepository:
     def __init__(self):

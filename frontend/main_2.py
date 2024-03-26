@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 
 from streamlit_extras.stylable_container import stylable_container
+from streamlit_extras.switch_page_button import switch_page
+
 
 def get_response(formatted_url):
     response = requests.get(formatted_url)
@@ -44,14 +46,20 @@ def display_my_recipe_container(my_recipe_list):
 
     container3_4 = st.container(border = True)
     with container3_4:
-        st.markdown("<h4 style='text-align: left;'>내가 해먹은 레시피</h4>", unsafe_allow_html=True)
-        
+        cols = st.columns([6,1])
+        with cols[0]:
+            st.markdown("<h4 style='text-align: left;'>내가 요리한 레시피</h4>", unsafe_allow_html=True)
+        with cols[1]:
+            if st.button("더보기", key='more_user_history'):
+                switch_page("user_history")
+
         cols = st.columns((1, 1, 1, 1, 1))
         
-        for i, my_recipe in enumerate(my_recipe_list):
+        for i, my_recipe in enumerate(my_recipe_list[:5]):
             with cols[i]:
                 with st.container(border=True):
-                    st.image(my_recipe["recipe_img_url"])
+                    # st.image(my_recipe["recipe_img_url"])
+                    st.markdown(f'<a href="{my_recipe["recipe_url"]}" target="_blank"><img src="{my_recipe["recipe_img_url"]}" alt="Your Image" width=90 height=90/></a>', unsafe_allow_html=True)
                     st.markdown(f"<p style='text-align: center;'>{my_recipe['recipe_name']}</p>", unsafe_allow_html=True)
 
 def display_recommended_container(recommended_list): 
@@ -59,14 +67,20 @@ def display_recommended_container(recommended_list):
     container3_4 = st.container(border = True)
 
     with container3_4:
-        st.markdown("<h4 style='text-align: left;'>내가 좋아할 레시피</h4>", unsafe_allow_html=True)
-        
+        cols = st.columns([6,1])
+        with cols[0]:
+            st.markdown("<h4 style='text-align: left;'>내가 좋아할 레시피</h4>", unsafe_allow_html=True)
+        with cols[1]:
+            if st.button("더보기", key='more_recommendation_history'):
+                switch_page("recommendation_history")
+            
         cols = st.columns((1, 1, 1, 1, 1))
         
-        for i, recommended in enumerate(recommended_list):
+        for i, recommended in enumerate(recommended_list[:5]):
             with cols[i]:
                 with st.container(border=True):
-                    st.image(recommended["recipe_img_url"])
+                    # st.image(recommended["recipe_img_url"])
+                    st.markdown(f'<a href="{recommended["recipe_url"]}" target="_blank"><img src="{recommended["recipe_img_url"]}" alt="Your Image" width=90 height=90/></a>', unsafe_allow_html=True)
                     st.markdown(f"<p style='text-align: center;'>{recommended['recipe_name']}</p>", unsafe_allow_html=True)
 
 def main_page_2():
