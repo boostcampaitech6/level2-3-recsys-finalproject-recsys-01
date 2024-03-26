@@ -13,7 +13,7 @@ def login_request(user_id, password):
     headers = {
         'Content-Type': 'application/json'
     }
-
+    # print('>>>>> ', full_url)
     response = requests.post(full_url, headers=headers, json=request_body)
     response_json = response.json() if response.status_code == 200 else None
 

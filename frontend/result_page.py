@@ -2,6 +2,9 @@ import math
 
 import streamlit as st
 import requests
+from common import display_css, link_css
+from user_history import display_recipes_in_rows_of_four
+
 
 def set_recommendation():
     st.session_state['page_info'] = 'recommendation'
@@ -12,10 +15,10 @@ def display_ingredients_in_rows_of_four(ingredients):
 
         with sub_container:
             
-            cols = st.columns(5)
+            cols = st.columns([2, 4, 1])
 
             with cols[0]:
-                st.markdown(f'<a href="{ingredient["img_link"]}" target="_blank"><img src="{ingredient["img_link"]}" alt="Your Image" width=100 height=100/></a>', unsafe_allow_html=True)
+                st.markdown(f'<a href="{ingredient["market_url"]}" target="_blank"><img src="{ingredient["img_link"]}" alt="Your Image" width=100 height=100/></a>', unsafe_allow_html=True)
 
             with cols[1]:
                 st.write(ingredient['ingredient_name'], ingredient['ingredient_amount'], ingredient['ingredient_unit'])
@@ -24,28 +27,6 @@ def display_ingredients_in_rows_of_four(ingredients):
             with cols[-1]:
                 st.link_button('구매', ingredient['market_url'], type='primary')
 
-def display_recipes_in_rows_of_four(recipe_list, user_feedback=None):
-
-    for row in range(math.ceil(len(recipe_list)/4)):
-        cols = st.columns(4)
-
-        for i in range(4):
-            item_idx = i + row * 4
-            if item_idx >= len(recipe_list): break
-
-            item = recipe_list[item_idx]
-            with cols[i]:
-                with st.container(border=True):
-                    st.markdown(f'<a href="{item["recipe_url"]}" target="_blank"><img src="{item["recipe_img_url"]}" alt="Your Image" width=120 height=120/></a>', unsafe_allow_html=True)
-
-                    if user_feedback is None:
-                        st.markdown(f'<p class="food-label">{item["recipe_name"]}</p>', unsafe_allow_html=True)
-                    else:
-                        sub_cols = st.columns([3,1])
-                        with sub_cols[0]:
-                            st.markdown(f'<p class="food-label">{item["recipe_name"]}</p>', unsafe_allow_html=True)
-                        with sub_cols[-1]:
-                            show_feedback_button(item['recipe_id'], user_feedback)
 
 def basket_feedback():
     st.markdown("<div style='text-align: center; font-size: 16px;'>방금 추천받은 장바구니 어땠나요?</div>", unsafe_allow_html=True)
@@ -114,3 +95,6 @@ def result_page():
         cols = st.columns([2, 3, 1])
         with cols[1]:
             button2 = st.button("추천받으러 가기 >>", type="primary", on_click=set_recommendation)
+        
+        display_css()
+        link_css()
