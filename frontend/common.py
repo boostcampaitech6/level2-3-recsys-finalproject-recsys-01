@@ -1,16 +1,18 @@
 import random, string
 import streamlit as st
 import streamlit_antd_components as sac
+from streamlit_extras.switch_page_button import switch_page
 
 random_chars = lambda: ''.join(random.choices(string.ascii_letters + string.digits, k=5))
 APP_SERVER_PUBLIC_IP = "175.45.194.96"
 APP_SERVER_PRIVATE_IP = "localhost" # "10.0.7.7"
+URL_MAIN = f"http://{APP_SERVER_PUBLIC_IP}:8501/"
 
 def init():
     st.session_state.is_authenticated = False 
     st.session_state.page_info = "home"
     st.session_state.url_prefix = f"http://{APP_SERVER_PRIVATE_IP}:8000"
-    st.session_state.url_main = f"http://{APP_SERVER_PUBLIC_IP}:8501/"
+    st.session_state.url_main = URL_MAIN
 
 def set_logout_page():
     st.session_state.is_authenticated = False 
@@ -25,16 +27,18 @@ def set_signup_page():
 
 def login_button():
     cols = st.columns(2)
-    if st.session_state.is_authenticated:
+    # if st.session_state.is_authenticated:
+    if st.session_state.get('is_authenticated', False):
         with cols[0]:
             st.markdown(f"<p style='text-align: center;font-size:15px'>{st.session_state.token['user_id']} 님</p>", unsafe_allow_html=True)
         with cols[1]:
             st.button(f"로그아웃", on_click=set_logout_page, key=f'logout_{st.session_state.page_info}_{random_chars()}')
     else:
         with cols[0]:
-            st.button(f"회원가입", on_click=set_signup_page, key=f'signup_{st.session_state.page_info}_{random_chars()}')
+            # st.button(f"회원가입", on_click=set_signup_page, key=f'signup_{st.session_state.page_info}_{random_chars()}')
+            st.button(f"회원가입", on_click=set_signup_page, key=f'signup_{random_chars()}')
         with cols[1]:
-            st.button(f"로그인", on_click=set_login_page, key=f'login_{st.session_state.page_info}_{random_chars()}', type='primary')
+            st.button(f"로그인", on_click=set_login_page, key=f'login_{random_chars()}', type='primary')
     return login_button
 
 def page_header():
@@ -43,7 +47,8 @@ def page_header():
     # 나만의 장바구니
     with cols[0]:
         st.markdown(
-            f'<h2><a href="{st.session_state.url_main}" target="_self" class="black-link">나만의 장바구니 🛒</a></h2>', 
+            # f'<h2><a href="{st.session_state.url_main}" target="_self" class="black-link">나만의 장바구니 🛒</a></h2>', 
+            f'<h2><a href="{URL_MAIN}" target="_self" class="black-link">나만의 장바구니 🛒</a></h2>', 
             unsafe_allow_html=True)
 
     # log in button
@@ -57,7 +62,18 @@ def page_header():
     button_css()
     link_css()
     display_css()
-    
+
+def back_to_home_container():
+    with st.container(border=True):
+        cols = st.columns([3,2,2])
+        with cols[1]:
+            st.write('로그인이 필요합니다.')
+        cols = st.columns([4,2.5,3])
+        with cols[1]:
+            # st.link_button('메인페이지로 >>', st.session_state.url_main, type='primary')
+            if st.button('메인페이지로 >>', key='home', type='primary'):
+                switch_page('홈_🏠')
+
 def link_css():
     st.markdown(
         '''<style>
