@@ -18,8 +18,8 @@ from user_history import user_history_page
 
 # if not st.session_state.is_authenticated:
 if not st.session_state.get('is_authenticated', False):
-    page_header()
+    page_header(is_main=False)
     back_to_home_container()
 else:
-    page_header()
+    page_header(is_main=False)
     user_history_page()

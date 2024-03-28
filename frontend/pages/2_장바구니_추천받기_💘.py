@@ -6,7 +6,7 @@ from main import welcome_container
 from recommendation import recommendation_page
 
 def recommendation():
-    page_header()
+    page_header(is_main=False)
     recommendation_page()
 
 if 'is_authenticated' not in st.session_state:
@@ -14,7 +14,7 @@ if 'is_authenticated' not in st.session_state:
     st.session_state.page_info = 'recommendation'
 
 if not st.session_state.is_authenticated:
-    page_header()
+    page_header(is_main=False)
     back_to_home_container()
 elif st.session_state.get('is_authenticated', False) and (st.session_state.get('page_info', '-') == 'result_page_1'):
     result_page()

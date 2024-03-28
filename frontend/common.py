@@ -25,7 +25,7 @@ def set_login_page():
 def set_signup_page():
     st.session_state.page_info = 'signup'
 
-def login_button():
+def login_button(is_main: bool=True):
     cols = st.columns(2)
     # if st.session_state.is_authenticated:
     if st.session_state.get('is_authenticated', False):
@@ -33,15 +33,14 @@ def login_button():
             st.markdown(f"<p style='text-align: center;font-size:15px'>{st.session_state.token['user_id']} 님</p>", unsafe_allow_html=True)
         with cols[1]:
             st.button(f"로그아웃", on_click=set_logout_page, key=f'logout_{st.session_state.page_info}_{random_chars()}')
-    else:
+    elif is_main:
         with cols[0]:
             # st.button(f"회원가입", on_click=set_signup_page, key=f'signup_{st.session_state.page_info}_{random_chars()}')
             st.button(f"회원가입", on_click=set_signup_page, key=f'signup_{random_chars()}')
         with cols[1]:
             st.button(f"로그인", on_click=set_login_page, key=f'login_{random_chars()}', type='primary')
-    return login_button
 
-def page_header():
+def page_header(is_main: bool=True):
     cols = st.columns([5, 2])
     
     # 나만의 장바구니
@@ -58,7 +57,7 @@ def page_header():
     #     with cols[2]:
     #         st.button(f"로그아웃", on_click=set_logout_page, key=f'logout_{st.session_state.page_info}_{random_chars()}')
     with cols[-1]:
-        login_button()
+        login_button(is_main)
     button_css()
     link_css()
     display_css()

@@ -18,8 +18,8 @@ from streamlit_extras.switch_page_button import switch_page
             
 # if not st.session_state.is_authenticated:
 if not st.session_state.get('is_authenticated', False):
-    page_header()
+    page_header(is_main=False)
     back_to_home_container()
 else:
-    page_header()
+    page_header(is_main=False)
     recommendation_history_page()
