@@ -111,6 +111,7 @@ def display_css():
         margin:0 2 0 0;
         display: block;
         width: 100px;
+        height: 28px;
         font-weight: bolder !important;
         overflow: hidden;
         text-overflow: ellipsis;
