@@ -2,7 +2,7 @@ import math
 
 import streamlit as st
 import requests
-from common import display_css, link_css
+from common import display_css, link_css, page_header
 from user_history import display_recipes_in_rows_of_four
 
 
@@ -55,7 +55,7 @@ def post_recommendation():
 def result_page():
 
 #    # 앱 헤더 
-#    page_header()
+    page_header(is_main=False)
 
 #    url = api_prefix + "users/{user_id}/previousrecommendation"
 #    formatted_url = url.format(user_id=st.session_state.user)
