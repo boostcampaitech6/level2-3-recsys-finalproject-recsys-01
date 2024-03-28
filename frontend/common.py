@@ -4,9 +4,9 @@ import streamlit_antd_components as sac
 from streamlit_extras.switch_page_button import switch_page
 
 random_chars = lambda: ''.join(random.choices(string.ascii_letters + string.digits, k=5))
-APP_SERVER_PUBLIC_IP = "175.45.194.96"
+APP_SERVER_PUBLIC_IP = "www.mybasket.life"
 APP_SERVER_PRIVATE_IP = "localhost" # "10.0.7.7"
-URL_MAIN = f"http://{APP_SERVER_PUBLIC_IP}:8501/"
+URL_MAIN = f"http://{APP_SERVER_PUBLIC_IP}/"
 
 def init():
     st.session_state.is_authenticated = False 
