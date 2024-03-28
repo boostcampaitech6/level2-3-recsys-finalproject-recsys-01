@@ -99,7 +99,7 @@ def choose_food_page():
             st.error("⚠️추천 정확성을 위해 5개 이상 체크해주세요.")
 
         if len(next_page_url):
-            cols = st.columns([3,1,1,3])
+            cols = st.columns([3,1,1.5,3])
             with cols[1]:
                 st.button('더보기', on_click=add_next_page_url, kwargs=dict(next_page_url=next_page_url))
             with cols[2]:

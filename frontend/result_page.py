@@ -73,7 +73,6 @@ def result_page():
         st.markdown("<div style='text-align: center; font-size: 16px;'>AI 를 이용하여 당신의 입맛에 맞는 레시피와 필요한 식재료를 추천해줍니다.</div>", unsafe_allow_html=True)
 
         st.divider()
-
         # 구매할 식료품 목록
         st.markdown("<h4 style='text-align: left;'>추천 장바구니</h4>", unsafe_allow_html=True)
 

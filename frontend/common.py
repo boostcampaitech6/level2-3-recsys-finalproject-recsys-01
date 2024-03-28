@@ -27,8 +27,7 @@ def login_button():
     cols = st.columns(2)
     if st.session_state.is_authenticated:
         with cols[0]:
-            st.markdown(f"<p style='text-align: center;'>{st.session_state.token['user_id']}</p>", unsafe_allow_html=True)
-            # st.write(f"{st.session_state.token['user_id']}님")
+            st.markdown(f"<p style='text-align: center;font-size:15px'>{st.session_state.token['user_id']} 님</p>", unsafe_allow_html=True)
         with cols[1]:
             st.button(f"로그아웃", on_click=set_logout_page, key=f'logout_{st.session_state.page_info}_{random_chars()}')
     else:
@@ -39,7 +38,7 @@ def login_button():
     return login_button
 
 def page_header():
-    cols = st.columns([4, 1, 1, 1])
+    cols = st.columns([5, 2])
     
     # 나만의 장바구니
     with cols[0]:
@@ -48,11 +47,13 @@ def page_header():
             unsafe_allow_html=True)
 
     # log in button
-    if st.session_state.is_authenticated:
-        with cols[1]:
-            st.markdown(f"<p style='text-align: center;font-size:20px'>{st.session_state.token['user_id']}님</p>", unsafe_allow_html=True)
-        with cols[2]:
-            st.button(f"로그아웃", on_click=set_logout_page, key=f'logout_{st.session_state.page_info}_{random_chars()}')
+    # if st.session_state.is_authenticated:
+    #     with cols[1]:
+    #         st.markdown(f"<p style='text-align: center;font-size:15px'>{st.session_state.token['user_id']}님</p>", unsafe_allow_html=True)
+    #     with cols[2]:
+    #         st.button(f"로그아웃", on_click=set_logout_page, key=f'logout_{st.session_state.page_info}_{random_chars()}')
+    with cols[-1]:
+        login_button()
     button_css()
     link_css()
     display_css()
@@ -60,13 +61,13 @@ def page_header():
 def link_css():
     st.markdown(
         '''<style>
-	    .black-link {
-		color: black !important; /* 글씨 색상을 검정색으로 설정 */
-		text-decoration: none; /* 밑줄 제거 */
-	    }
-	    .black-link:hover {
-		text-decoration: underline; /* 마우스 호버 시 밑줄 표시 */
-	    }
+        .black-link {
+        color: black !important; /* 글씨 색상을 검정색으로 설정 */
+        text-decoration: none; /* 밑줄 제거 */
+        }
+        .black-link:hover {
+        text-decoration: underline; /* 마우스 호버 시 밑줄 표시 */
+        }
         </style>
         ''', 
             unsafe_allow_html=True)
