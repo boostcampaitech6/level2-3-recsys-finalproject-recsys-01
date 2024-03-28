@@ -125,7 +125,7 @@ class UserService:
         prob += pulp.lpSum([dish_use_variable[dish] for dish in dishes])
 
         # 비용 제약 조건
-        prob += pulp.lpSum([price_infos[i]*ingredient_use_variable[i] for i in price_infos]) <= MAX_PRICE
+        prob += pulp.lpSum([price_infos[i]['price']*ingredient_use_variable[i] for i in price_infos]) <= MAX_PRICE
 
         # 요리별 식재료 제약 조건
         for dish in dishes:

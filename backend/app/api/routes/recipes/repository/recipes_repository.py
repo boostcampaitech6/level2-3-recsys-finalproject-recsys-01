@@ -43,27 +43,34 @@ class RecipesRepository:
         # ingredients = list(self.ingredients_collection
         #                    .find({"_id": {"$in": list(map(ObjectId, ingredient_ids))}})
         #                    .sort({'_id': 1}))
-        ingredients = [self.ingredients_collection.find_one({'_id': id}) for id in ingredient_ids]
-        prices = list(next(self.prices_collection
-                  .find({"ingredient_id": ingredient_id}).sort({"date": -1}).limit(1)) for ingredient_id in ingredient_ids)
+        ingredients = list(self.ingredients_collection.find_one({'_id': id}) for id in ingredient_ids)
+        # logging.debug('[ingredients]', ingredients)
+        prices = list(self.prices_collection
+                  .find_one({"ingredient_id": ingredient['_id']}) for ingredient in ingredients)
         # prices = list(self.prices_collection.find({"ingredient_id": {"$in": list(map(ObjectId, ingredient_ids))}}))
-
-        logging.debug('[LEN]', len(amounts), len(ingredients), len(prices))
+        # logging.debug('[prices]', prices)
+        # logging.debug('[LEN]', len(amounts), len(ingredients), len(prices))
         ingredient_list = list()
+        prev_name = ''
         for amount, ingredient, price in zip(amounts, ingredients, prices):
             # id: PyObjectId = Field(alias='_id', default=None)
             # name: str
             # price: float
             # price_url: str
             # amount: dict
+            # amount['name'] = ingredient['name']
+            # if ingredient['name'] == prev_name: continue
+            # prev_name = ingredient['name']
+            # amount['_id'] = ingredient['_id']
+            # amount['id'] = ingredient['_id']
             amount['name'] = ingredient['name']
-            amount['price'] = price['price'] if price['price'] else 0
-            amount['price_url'] = price['price_url'] if price['price_url'] else ''
+            amount['price'] = price['price'] if price is not None else 0
+            amount['price_url'] = price['price_url'] if price is not None else ''
             amount['amount'] = {
-                'value': amount['value'],
-                'unit': amount['unit'],
+                'value': price['value'] if price is not None else '0',
+                'unit': price['unit'] if price is not None else 'g',
             }
-            amount['img_url'] = price['img_url'] if price['img_url'] else ''
+            amount['img_url'] = price['img_url'] if price is not None else ''
             ingredient_list.append(amount)
         
         # logging.debug('[RECIPE_REPOSITORY_RESULT]', ingredient_list)
