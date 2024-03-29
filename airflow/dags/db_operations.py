@@ -13,7 +13,7 @@ def fetch_user_history(user_id, result_type='recipe_sno'):
 
     # user
     user_id_and_feedbacks = []
-    for u in db['users'].find({'_id': ObjectId(user_id)}):
+    for u in db['users'].find({'_id':ObjectId(user_id)}): # 원랜 여기가 find()
         # initial_feedback이 있음
         feedbacks = u['initial_feedback_history']
         # 추가 피드백 있는 경우
@@ -22,7 +22,7 @@ def fetch_user_history(user_id, result_type='recipe_sno'):
         # 피드백 _id를 recipe_sno 로 변경
         recipe_snos = []
         for recipe in feedbacks:
-            for r in db['recipes'].find({'_id': ObjectId(recipe)}):
+            for r in db['recipes'].find({'_id': recipe}):
                 recipe_snos.append(r['recipe_sno'])
 
         if result_type == 'recipe_sno':
@@ -46,17 +46,16 @@ def fetch_user_histories(result_type='recipe_sno'):
 
     # user
     user_id_and_feedbacks = []
-    for u in db['users'].find({}):
+    for u in db['users'].find({'_id':ObjectId('65fe8ede5b23f8126f66ffa2')}): # 원랜 여기가 find()
         # initial_feedback이 있음
         feedbacks = u['initial_feedback_history']
         # 추가 피드백 있는 경우
         if 'feedback_history' in u:
-            feedbacks.extend(u['feedback_history'])
-
+            feedbacks.append(u['feedback_history'])
         # 피드백 _id를 recipe_sno 로 변경
         recipe_snos = []
         for recipe in feedbacks:
-            for r in db['recipes'].find({'_id': ObjectId(recipe)}):
+            for r in db['recipes'].find({'_id': recipe}):
                 recipe_snos.append(r['recipe_sno'])
 
         if result_type == 'recipe_sno':
@@ -69,7 +68,6 @@ def fetch_user_histories(result_type='recipe_sno'):
                 '_id': str(u['_id']),
                 'feedbacks': [str(feedback) for feedback in feedbacks],
                 })
-
 
     return user_id_and_feedbacks
 
