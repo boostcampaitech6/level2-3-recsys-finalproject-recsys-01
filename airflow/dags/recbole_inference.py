@@ -17,15 +17,18 @@ def prep_inference_data(user_id_and_feedbacks, dataset, config) -> Interaction:
         item_id_list.append(recipe_ids) 
         item_length.append(len(recipe_ids))
 
+    max_length = 100 # max(len(sublist) for sublist in item_id_list)
+    padded_item_id_list = [sublist + [0]*(max_length - len(sublist)) for sublist in item_id_list]
+
     item_dict = {
-        'item_id_list': torch.tensor(item_id_list, dtype=torch.int64).to(config['device']),
+        'item_id_list': torch.tensor(padded_item_id_list, dtype=torch.int64).to(config['device']),
         'item_length': torch.tensor(item_length, dtype=torch.int64).to(config['device'])
     }
 
     # Interaction 객체 생성
     interaction = Interaction(item_dict)
 
-    return interaction 
+    return interaction, item_id_list 
 
 def sasrec_inference(modelpath: str, user_id_and_feedbacks: list, k: int=20, batch_size: int=4096):
 
@@ -40,11 +43,15 @@ def sasrec_inference(modelpath: str, user_id_and_feedbacks: list, k: int=20, bat
         # prep data
         batch_data = user_id_and_feedbacks[i*batch_size: (i+1)*batch_size]
         user_ids = [data['_id'] for data in batch_data]
-        inference_data = prep_inference_data(batch_data, dataset, config)
+        inference_data, item_id_list = prep_inference_data(batch_data, dataset, config)
 
         # prediction
         scores = model.full_sort_predict(inference_data).view(num_users, -1)
-        probas = torch.sigmoid(scores)
+        probas = torch.sigmoid(scores).detach().cpu()
+
+        # masking - 언젠가 해야 함
+        for proba, item_ids in zip(probas, item_id_list):
+            proba[item_ids] = 0
 
         # 확률이 높은 아이템 20개 추출 
         topk_proba, topk_item = torch.topk(probas, k, dim=1)
@@ -65,12 +72,12 @@ def sasrec_inference(modelpath: str, user_id_and_feedbacks: list, k: int=20, bat
 if __name__ == '__main__':
 
     # 설정 파일과 모델 저장 경로 설정
-    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/BERT4Rec-Mar-24-2024_00-51-09.pth'
+    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/SASRec-Mar-25-2024_03-39-27.pth'
 
-    from db_operations import fetch_user_history 
+    from db_operations import fetch_user_histories 
 
     # 데이터 얻기
-    user_id_and_feedbacks = fetch_user_history()
+    user_id_and_feedbacks = fetch_user_histories()
 
     recommended_items = sasrec_inference(
         modelpath, 
@@ -84,8 +91,12 @@ if __name__ == '__main__':
     client = MongoClient(host=db_host, port=db_port)
     db = client.dev
 
-    for recommended_item in recommended_items:
+    for feedback, recommended_item in zip(user_id_and_feedbacks, recommended_items):
         print(recommended_item['_id'])
+        for recipe in feedback['feedbacks']:
+            for r in db['recipes'].find({'recipe_sno': recipe}):
+                print(r['food_name'], end=' | ')
+        print()
         for recipe in recommended_item['recommended_items']:
             for r in db['recipes'].find({'recipe_sno': recipe}):
                 print(r['food_name'], end=' | ')
