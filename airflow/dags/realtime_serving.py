@@ -21,7 +21,7 @@ def hybrid_inference(**context):
     user_id_and_feedbacks = context["ti"].xcom_pull(key='user_id_and_feedbacks_hybrid')
 
     # 설정 파일과 모델 저장 경로 설정
-    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/BERT4Rec-Mar-24-2024_00-51-09.pth'
+    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/SASRec-Mar-29-2024_19-28-51.pth'
 
     recommended_results = sasrec_inference(
         modelpath, 
