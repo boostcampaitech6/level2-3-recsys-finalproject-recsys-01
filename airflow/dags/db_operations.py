@@ -46,7 +46,8 @@ def fetch_user_histories(result_type='recipe_sno'):
 
     # user
     user_id_and_feedbacks = []
-    for u in db['users'].find({'_id':ObjectId('65fe8ede5b23f8126f66ffa2')}): # 원랜 여기가 find()
+    for u in db['users'].find({}):
+        if 'initial_feedback_history' not in u: continue
         # initial_feedback이 있음
         feedbacks = u['initial_feedback_history']
         # 추가 피드백 있는 경우
