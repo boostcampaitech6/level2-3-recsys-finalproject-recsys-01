@@ -22,3 +22,10 @@ def get_model(model_name, config, train_data):
         return BPR(config, train_data.dataset).to(config['device'])
     if model_name == "SASRec":
         return SASRec(config, train_data.dataset).to(config['device'])
+    
+
+def get_directory_path():
+    directory_path = os.getenv('MODEL_SAVE_DIR')
+    if directory_path is None:
+        raise EnvironmentError("환경변수 'MODEL_SAVE_DIR'가 설정되어 있지 않습니다.")
+    return directory_path
