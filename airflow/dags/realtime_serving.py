@@ -21,7 +21,7 @@ def hybrid_inference(**context):
     user_id_and_feedbacks = context["ti"].xcom_pull(key='user_id_and_feedbacks_hybrid')
 
     # 설정 파일과 모델 저장 경로 설정
-    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/BERT4Rec-Mar-24-2024_00-51-09.pth'
+    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/SASRec-Mar-25-2024_03-39-27.pth'
 
     recommended_results = sasrec_inference(
         modelpath, 
@@ -71,6 +71,7 @@ with DAG(
         owner="judy",
         retries=3,
         retry_delay=timedelta(minutes=5), 
+        provide_context=True
     )
 
     # hybrid inference
@@ -107,6 +108,7 @@ with DAG(
             'result_type': 'recipe_id', 
             },
         retry_delay=timedelta(minutes=5), 
+        provide_context=True
     )
 
     # content-based inference
@@ -156,6 +158,8 @@ with DAG(
             },
         retry_delay=timedelta(minutes=5), 
     )
-    t1 >> t2 >> t3
-    t4 >> t5 >> t6
+    t1 >> t2
+    t4 >> t5
     [t2, t5] >> t7 >> t8
+    t2 >> t3
+    t5 >> t6
