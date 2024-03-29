@@ -22,5 +22,8 @@ def get_data_and_model():
     # 모델 불러오기
     model = get_model(config['model'], config, train_data)
     trainer = Trainer(config, model)
-    data_and_model = (model, trainer, train_data, valid_data, test_data)
+    
+    # 모델을 저장할 경로
+    artifact_path = config['artifact_path']
+    data_and_model = (model, trainer, train_data, valid_data, test_data, artifact_path)
     return data_and_model

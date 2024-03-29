@@ -6,7 +6,7 @@ from utils import find_latest_file, get_directory_path
 
 
 def train():
-    model, trainer, train_data, valid_data, test_data = get_data_and_model()
+    model, trainer, train_data, valid_data, test_data, artifact_path = get_data_and_model()
     with mlflow.start_run():
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         run_name = f"{model.__class__.__name__}_{current_time}"
@@ -18,7 +18,7 @@ def train():
         # 테스트 데이터에 대한 평가
         test_result = trainer.evaluate(test_data, load_best_model=True, show_progress=True)
 
-        # MLflow에 파라미터, 메트릭, 모델 로깅
+        # MLflow에 로깅
         mlflow.log_metric("best_validation_score", best_valid_score)
         mlflow.pytorch.log_model(model, "model")
 
@@ -26,7 +26,7 @@ def train():
         # RecBole run의 결과로 생긴 .pth 파일 찾기
         artifact = find_latest_file(directory_path)
         # RecBole .pth 파일 저장 
-        mlflow.log_artifact(artifact, artifact_path="recbole")
+        mlflow.log_artifact(artifact, artifact_path=artifact_path)
         
         
 if __name__ == "__main__":
