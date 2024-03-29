@@ -19,10 +19,11 @@ def fetch_user_history(user_id, result_type='recipe_sno'):
         # 추가 피드백 있는 경우
         if 'feedback_history' in u:
             feedbacks.append(u['feedback_history'])
+
         # 피드백 _id를 recipe_sno 로 변경
         recipe_snos = []
         for recipe in feedbacks:
-            for r in db['recipes'].find({'_id': recipe}):
+            for r in db['recipes'].find({'_id': ObjectId(recipe)}):
                 recipe_snos.append(r['recipe_sno'])
 
         if result_type == 'recipe_sno':
