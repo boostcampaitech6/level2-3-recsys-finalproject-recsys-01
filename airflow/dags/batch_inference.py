@@ -10,7 +10,7 @@ from recbole_inference import sasrec_inference
 
 def fetch_and_push_user_histories(result_type:str=None, **context):
     if result_type:
-        user_id_and_feedbacks = fetch_user_histores(result_type)
+        user_id_and_feedbacks = fetch_user_histories(result_type)
         context["ti"].xcom_push(key='user_id_and_feedbacks_cb', value=user_id_and_feedbacks)
     else:
         user_id_and_feedbacks = fetch_user_histories()
@@ -20,7 +20,7 @@ def hybrid_inference(**context):
     user_id_and_feedbacks = context["ti"].xcom_pull(key='user_id_and_feedbacks_hybrid')
 
     # 설정 파일과 모델 저장 경로 설정
-    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/BERT4Rec-Mar-24-2024_00-51-09.pth'
+    modelpath = '/home/judy/level2-3-recsys-finalproject-recsys-01/ml/Sequential/saved/SASRec-Mar-25-2024_03-39-27.pth'
 
     recommended_results = sasrec_inference(
         modelpath, 
@@ -157,6 +157,8 @@ with DAG(
             },
         retry_delay=timedelta(minutes=5), 
     )
-    t1 >> t2 >> t3
-    t4 >> t5 >> t6
+    t1 >> t2
+    t4 >> t5
     [t2, t5] >> t7 >> t8
+    t2 >> t3
+    t5 >> t6
