@@ -14,8 +14,11 @@ def post_recommendation():
     }
 
     data = requests.post(formatted_url, headers=headers)
-    st.session_state.recommendation_result = data.json()
-    st.session_state['page_info'] = 'result_page_1'
+    if data.status_code == 503:
+        st.session_state['status_code'] = 503
+    else:
+        st.session_state.recommendation_result = data.json()
+        st.session_state['page_info'] = 'result_page_1'
 
 def recommendation_page():
 
@@ -33,14 +36,15 @@ def recommendation_page():
         if 'price' not in st.session_state:
             st.session_state.price = 50000
 
-        def handle_change():
-               st.session_state.price = st.session_state.price_slider
+        # def handle_change():
+        #        st.session_state.price = st.session_state.price_slider
 
         with cols[1]:
 
-            st.slider(
+            st.session_state.price = st.slider(
                 label='price', min_value=10000, max_value=200000, value=50000, step=5000,
-                on_change=handle_change, key='price_slider'
+                # on_change=handle_change, 
+                key='price_slider'
             )
 
         cols = st.columns(5)
@@ -58,3 +62,7 @@ def recommendation_page():
             cols = st.columns([2,1.5,2])
             with cols[1]:
                 button2 = st.button("장바구니 추천받기", type="primary", on_click=post_recommendation)
+
+    if 'status_code' in st.session_state and st.session_state.status_code == 503:
+        st.error(f"😕 사용자의 취향을 분석 중입니다. 잠시 후 다시 시도해주세요.")
+        st.session_state.status_code = ''

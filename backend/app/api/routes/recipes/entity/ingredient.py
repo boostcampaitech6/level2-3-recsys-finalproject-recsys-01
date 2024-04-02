@@ -1,3 +1,4 @@
+from bson import ObjectId
 from pydantic import BaseModel, Field, ConfigDict
 from app.utils.pyobject_id import PyObjectId
 
@@ -9,6 +10,7 @@ class Ingredient(BaseModel):
     price_url: str
     amount: dict
     img_url: str
+    ingredient_id: ObjectId
     
     model_config = ConfigDict(
         populate_by_name=True,
@@ -32,6 +34,9 @@ class Ingredient(BaseModel):
     
     def get_price(self):
         return self.price
+    
+    def get_ingredient_id(self):
+        return self.ingredient_id
     
     def as_basket_form(self):
         '''{

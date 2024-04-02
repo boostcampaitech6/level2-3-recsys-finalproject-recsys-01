@@ -100,22 +100,22 @@ class UserController:
         # logging.debug(recipe_infos.get_total_ingredients_set())
 
         # ingredient 정보 가져오기
-        price_infos = recipe_infos.get_total_ingredients_set()
+        price_infos = recipe_infos.get_total_amounts_set()
 
         # logging.debug("----------[user_controller]------------")
         # logging.debug(recipe_infos)
         # logging.debug(price_infos)
-        price_infos = self.recipe_service.get_prices_by_ingredients_id(price_infos)
+        price_infos = self.recipe_service.get_prices_by_ingredients_id(price_infos) # ingredient 기준
 
         # 장바구니 추천
-        recipes = recipe_infos.get_recipes()
+        recipes = recipe_infos.get_recipes() # amount 기준
         recipes = {recipe.get_id(): recipe.get_ingredients() for recipe in recipes}
 
         recommended_basket = self.user_service.recommended_basket(recipes, price_infos, price)
 
         # 추천 장바구니 결과 저장
-        basket_price = sum([price for id, price in price_infos.items() if id in recommended_basket['ingredient_list']])
-        recommended_basket['basket_price'] = basket_price
+        # basket_price = sum([price for id, price['price'] in price_infos.items() if id in recommended_basket['ingredient_list']])
+        recommended_basket['basket_price'] = 0
         self.user_service.save_basket(
             user_id=user_id,
             price=price,
@@ -134,8 +134,15 @@ class UserController:
         recipe_info_list = [recipe.as_basket_form() for recipe in recipe_infos.get_recipes() if recipe.get_id() in recommended_basket['recipe_list']]
         # logging.debug('Basket Form', recipe_info_list)
 
-        total_ingredients = self.recipe_service.get_ingredients_by_ingredients_id(recipe_infos.get_total_ingredients_set())
-        ingredient_info_list = [ingredient.as_basket_form() for ingredient in total_ingredients if ingredient.get_id() in recommended_basket['ingredient_list']]
+        total_amounts = self.recipe_service.get_amounts_by_amounts_id(recipe_infos.get_total_amounts_set())
+        # ingredient_info_list = [ingredient.as_basket_form() for ingredient in total_ingredients if ingredient.get_id() in recommended_basket['ingredient_list']]
+        ingredient_info_list = []
+        unique_ingredient_id = set()
+        for amount in total_amounts:
+            if amount.get_id() not in recommended_basket['ingredient_list']: continue
+            if amount.get_ingredient_id() in unique_ingredient_id: continue
+            unique_ingredient_id.add(amount.get_ingredient_id())
+            ingredient_info_list.append(amount.as_basket_form())
         # logging.debug('Ingredient Basket Form', ingredient_info_list)
 
         basket_info = {
