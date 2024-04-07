@@ -3,7 +3,7 @@ import bentoml
 import threading  # threading 라이브러리 추가
 
 from db_operations import fetch_user_history, update_model_recommendations, cb_inference, blending_results
-from _recbole_inference import Inference #sasrec_inference 
+from _recbole_inference import Inference
 
 @bentoml.service(
     resources={"cpu": "6"},
@@ -35,6 +35,7 @@ class OnlineServing:
         cb_data = cb_inference(cb_data)
 
         data = blending_results(hybrid_data, cb_data)
+        
         update_model_recommendations(
             data, 
             collection_name='model_recommendation_history_total', 
@@ -42,18 +43,7 @@ class OnlineServing:
             meta={'model_version': '0.0.1'},
         )
 
-#        # hybrid save
-#        update_model_recommendations(
-#            hybrid_data, 
-#            collection_name='model_recommendation_history_hybrid', 
-#        )
-#        # cb save
-#        update_model_recommendations(
-#            cb_data, 
-#            collection_name='model_recommendation_history_cb', 
-#            input_type='recipe_id'
-#        )
-#
+        # 비동기로 DB에 결과 기록
         threading.Thread(target=self.save_data_async, args=(hybrid_data, 'model_recommendation_history_hybrid',)).start()
         threading.Thread(target=self.save_data_async, args=(cb_data, 'model_recommendation_history_cb', 'recipe_id',)).start()
 
