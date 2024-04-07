@@ -17,8 +17,20 @@ def prep_inference_data(user_id_and_feedbacks, dataset, config) -> Interaction:
         item_id_list.append(recipe_ids) 
         item_length.append(len(recipe_ids))
 
+    # 모든 리스트를 동일한 길이로 패딩하기 위해 최대 길이 찾기
+    max_length = 100 #max(len(item) for item in item_id_list)
+
+    # 모든 리스트를 최대 길이에 맞게 패딩
+    padded_item_id_list = [[0] * (max_length - len(item)) + item for item in item_id_list]
+    target_list = [item[-100:] for item in padded_item_id_list]
+    # item_length = [ max_length for item in item_id_list]
+
+
+    print("prep inference data", len(target_list), len(item_length))
+    print("prep inference data", target_list, item_length)
+
     item_dict = {
-        'item_id_list': torch.tensor(item_id_list, dtype=torch.int64).to(config['device']),
+        'item_id_list': torch.tensor(target_list, dtype=torch.int64).to(config['device']),
         'item_length': torch.tensor(item_length, dtype=torch.int64).to(config['device'])
     }
 
@@ -43,7 +55,9 @@ def sasrec_inference(modelpath: str, user_id_and_feedbacks: list, k: int=20, bat
         inference_data = prep_inference_data(batch_data, dataset, config)
 
         # prediction
-        scores = model.full_sort_predict(inference_data).view(num_users, -1)
+        scores = model.full_sort_predict(inference_data)#.view(num_users, -1)
+        print(scores.size())
+        print(num_users)
         probas = torch.sigmoid(scores)
 
         # 확률이 높은 아이템 20개 추출 
