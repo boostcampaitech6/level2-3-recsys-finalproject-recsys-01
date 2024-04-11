@@ -1,0 +1,5 @@
+model: BPR
+dataset: BasketRecommendation
+config_file_list:
+  - recbole_general.yaml
+artifact_path: recbole

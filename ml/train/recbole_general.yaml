@@ -1,0 +1,21 @@
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+
+load_col:
+    inter: [user_id, item_id] 
+
+data_path: /dev/shm/data
+dataset: BasketRecommendation
+
+epochs: 1
+train_batch_size: 64
+
+stopping_step: 3
+learning_rate: 0.001
+
+eval_args: 
+    group_by: user
+
+metrics: ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision']
+topk: 20
+valid_metric: Recall@20
