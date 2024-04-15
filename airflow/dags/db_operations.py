@@ -19,10 +19,11 @@ def fetch_user_history(user_id, result_type='recipe_sno'):
         # 추가 피드백 있는 경우
         if 'feedback_history' in u:
             feedbacks.append(u['feedback_history'])
+
         # 피드백 _id를 recipe_sno 로 변경
         recipe_snos = []
         for recipe in feedbacks:
-            for r in db['recipes'].find({'_id': recipe}):
+            for r in db['recipes'].find({'_id': ObjectId(recipe)}):
                 recipe_snos.append(r['recipe_sno'])
 
         if result_type == 'recipe_sno':
@@ -52,11 +53,11 @@ def fetch_user_histories(result_type='recipe_sno'):
         feedbacks = u['initial_feedback_history']
         # 추가 피드백 있는 경우
         if 'feedback_history' in u:
-            feedbacks.append(u['feedback_history'])
+            feedbacks.extend(u['feedback_history'])
         # 피드백 _id를 recipe_sno 로 변경
         recipe_snos = []
         for recipe in feedbacks:
-            for r in db['recipes'].find({'_id': recipe}):
+            for r in db['recipes'].find({'_id': ObjectId(recipe)}):
                 recipe_snos.append(r['recipe_sno'])
 
         if result_type == 'recipe_sno':
@@ -104,7 +105,7 @@ def update_model_recommendations(recommended_results, collection_name, meta={}, 
 
     db[collection_name].insert_many(data)
 
-    print('push data into db')
+    # print('push data into db')
 
 def cb_inference(user_id_and_feedbacks: list, k: int=20, batch_size: int=4096):
 

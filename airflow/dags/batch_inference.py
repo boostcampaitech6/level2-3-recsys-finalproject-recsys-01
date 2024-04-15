@@ -10,7 +10,7 @@ from recbole_inference import sasrec_inference
 
 def fetch_and_push_user_histories(result_type:str=None, **context):
     if result_type:
-        user_id_and_feedbacks = fetch_user_histores(result_type)
+        user_id_and_feedbacks = fetch_user_histories(result_type)
         context["ti"].xcom_push(key='user_id_and_feedbacks_cb', value=user_id_and_feedbacks)
     else:
         user_id_and_feedbacks = fetch_user_histories()
